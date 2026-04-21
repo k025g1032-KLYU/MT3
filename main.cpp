@@ -284,7 +284,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		MatrixScreenPrint(kColumnWidth * 5, 0, transposeM1, "TransposeM1");
 		MatrixScreenPrint(kColumnWidth * 5, kRowHeight * 5, transposeM2, "TransposeM2");
 		MatrixScreenPrint(kColumnWidth * 5, kRowHeight * 5*2, identity, "Identity");
-
+		 
 		///
 		/// ↑描画処理ここまで
 		///
