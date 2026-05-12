@@ -289,14 +289,42 @@ Matrix4x4 MakeScaleMatrix(const Vector3& scale) {
 	return result;
 }
 
-Matrix4x4 MakeRotationMatrix(float angle) {
-	Matrix4x4 result = MakeIdentity4x4();
-	float cosA = cosf(angle);
-	float sinA = sinf(angle);
-	result.m[1][1] = cosA;
-	result.m[2][1] = -sinA;
-	result.m[1][2] = sinA;
-	result.m[2][2] = cosA;
+Matrix4x4 MakeRotationXMatrix(float radian) {
+	Matrix4x4 result{};
+
+	result.m[0][0] = 1.0f;
+	result.m[1][1] = cosf(radian);
+	result.m[1][2] = sinf(radian);
+	result.m[2][1] = -sinf(radian);
+	result.m[2][2] = cosf(radian);
+	result.m[3][3] = 1.0f;
+
+	return result;
+}
+
+Matrix4x4 MakeRotationYMatrix(float radian) {
+	Matrix4x4 result{};
+
+	result.m[0][0] = cosf(radian);
+	result.m[0][2] = -sinf(radian);
+	result.m[1][1] = 1.0f;
+	result.m[2][0] = sinf(radian);
+	result.m[2][2] = cosf(radian);
+	result.m[3][3] = 1.0f;
+
+	return result;
+}
+
+Matrix4x4 MakeRotationZMatrix(float radian) {
+	Matrix4x4 result{};
+
+	result.m[0][0] = cosf(radian);
+	result.m[0][1] = sinf(radian);
+	result.m[1][0] = -sinf(radian);
+	result.m[1][1] = cosf(radian);
+	result.m[2][2] = 1.0f;
+	result.m[3][3] = 1.0f;
+
 	return result;
 }
 
@@ -330,18 +358,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// ライブラリの初期化
 	Novice::Initialize(kWindowTitle, 1280, 720);
 
-	Vector3 translate = { 4.1f, 2.6f, 0.8f };
-	Vector3 scale = { 1.5f, 5.2f, 7.3f };
-	Vector3 point ={ 2.3f,3.8f, 1.4f };
+	Vector3 rotation ={ 0.4f,1.43f, -0.8f };
 
-	Matrix4x4 transformMatrix = 
-	{
-		1.0f,2.0f,3.0f,4.0f,
-		3.0f,1.0f,1.0f,2.0f,
-		1.0f,4.0f,2.0f,3.0f,
-		2.0f,2.0f,1.0f,3.0f
-	};
-	
 
 	// キー入力結果を受け取る箱
 	char keys[256] = {0};
@@ -360,11 +378,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		/// ↓更新処理ここから
 		///
 
-		Matrix4x4 translateMatrix = MakeTranslateMatrix(translate);
-		Matrix4x4 scaleMatrix = MakeScaleMatrix(scale);
-		Matrix4x4 rotationMatrix = MakeRotationMatrix(0);
+		Matrix4x4 RotationMatrixX = MakeRotationXMatrix(rotation.x);
+		Matrix4x4 RotationMatrixY = MakeRotationYMatrix(rotation.y);
+		Matrix4x4 RotationMatrixZ = MakeRotationZMatrix(rotation.z);
+		Matrix4x4 RotationXYZMatrix = Multiply(Multiply(RotationMatrixX, RotationMatrixY), RotationMatrixZ)	;
 		
-		Vector3 TransformedPoint = Transform(point, transformMatrix);
+		
 
 		///
 		/// ↑更新処理ここまで
@@ -374,12 +393,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		/// ↓描画処理ここから
 		///
 
-		PrintVector3(0, 0, TransformedPoint, "Transformed");
-		
-
-		MatrixScreenPrint(0, kRowHeight , translateMatrix,"TranslateMatrix");
-		MatrixScreenPrint(0, kRowHeight * 6, scaleMatrix, "ScaleMatrix");
-		MatrixScreenPrint(0, kRowHeight * 11, rotationMatrix, "RotationMatrix");
+		MatrixScreenPrint(0, 0 , RotationMatrixX,"RotationMatrixX");
+		MatrixScreenPrint(0, kRowHeight * 5, RotationMatrixY, "RotationMatrixY");
+		MatrixScreenPrint(0, kRowHeight * 5*2, RotationMatrixZ, "RotationMatrixZ");
+		MatrixScreenPrint(0, kRowHeight * 5*3, RotationXYZMatrix, "RotationXYZMatrix");
 		
 
 		///
