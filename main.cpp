@@ -119,8 +119,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		Matrix4x4 RotationMatrixY = MakeRotationYMatrix(rotation.y);
 		Matrix4x4 RotationMatrixZ = MakeRotationZMatrix(rotation.z);
 		Matrix4x4 RotationXYZMatrix = Multiply(Multiply(RotationMatrixX, RotationMatrixY), RotationMatrixZ)	;
-		
-		
 
 		///
 		/// ↑更新処理ここまで
