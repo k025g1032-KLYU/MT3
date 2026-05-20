@@ -433,8 +433,20 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	    { -1.0f, -1.0f, 0.0f },
 	    {  1.0f, -1.0f, 0.0f },  // 左下
 	};
+	const Vector3 kLocalVertices2[3] =
+	{
+		{  0.0f,  -1.0f, 1.0f },
+		{ -1.0f, -1.0f, -1.0f },
+		{  1.0f, -1.0f, -1.0f },  // 左下
+	};
+	const Vector3 kLocalVertices3[3] =
+	{
+		{  2.0f,  1.0f, 0.0f },
+		{ 1.0f, -1.0f, 0.0f },
+		{  3.0f, -1.0f, 0.0f },  // 左下
+	};
 	
-
+	
 	// キー入力結果を受け取る箱
 	char keys[256] = {0};
 	char preKeys[256] = {0};
@@ -515,6 +527,16 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			Vector3 ndcvertex = Transform(kLocalVertices[i], worldViewProjectionMatrix);
 			screenVertics[i] = Transform(ndcvertex, viewportMatrix);
 		}
+		Vector3 screenVertics2[3];
+		for (int i = 0; i < 3; i++) {
+			Vector3 ndcvertex = Transform(kLocalVertices2[i], worldViewProjectionMatrix);
+			screenVertics2[i] = Transform(ndcvertex, viewportMatrix);
+		}
+		Vector3 screenVertics3[3];
+		for (int i = 0; i < 3; i++) {
+			Vector3 ndcvertex = Transform(kLocalVertices3[i], worldViewProjectionMatrix);
+			screenVertics3[i] = Transform(ndcvertex, viewportMatrix);
+		}
 
 		///
 		/// ↑更新処理ここまで
@@ -531,13 +553,27 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			RED, kFillModeSolid);
 
 		Novice::DrawTriangle(
+			int(screenVertics2[0].x), int(screenVertics2[0].y),
+			int(screenVertics2[1].x), int(screenVertics2[1].y),
+			int(screenVertics2[2].x), int(screenVertics2[2].y),
+			RED, kFillModeSolid);
+
+		Novice::DrawTriangle(
+			int(screenVertics3[0].x), int(screenVertics3[0].y),
+			int(screenVertics3[1].x), int(screenVertics3[1].y),
+			int(screenVertics3[2].x), int(screenVertics3[2].y),
+			RED, kFillModeSolid);
+
+		/*Novice::DrawTriangle(
 			int(kLocalVertices[0].x), int(kLocalVertices[0].y),
 			int(kLocalVertices[1].x), int(kLocalVertices[1].y),
 			int(kLocalVertices[2].x), int(kLocalVertices[2].y),
-			BLACK, kFillModeWireFrame);
+			BLACK, kFillModeWireFrame);*/
 		
 		
 		PrintVector3(0, 0, cross, "cross");
+		Novice::ScreenPrintf(0, 20, "cameraPosition: %.02f, %.02f, %.02f", cameraPosition.x, cameraPosition.y, cameraPosition.z);
+		Novice::ScreenPrintf(0, 40, "cameraRotation: %.02f, %.02f, %.02f", cameraRotation.x, cameraRotation.y, cameraRotation.z);
 
 		///
 		/// ↑描画処理ここまで
