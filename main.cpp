@@ -497,8 +497,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Vector3 sphereCenter{ 0.0f, 2.0f, 0.0f };
 	float sphereRadius = 1.0f;
 
-	//Vector3 cameraPosition{ 0.0f, 1.9f, -6.49f };
-	//Vector3 cameraRotation{ 0.26f, 0.0f, 0.0f };
 
 	int kWindowWidth = 1280;
 	int kWindowHeight = 720;
@@ -581,12 +579,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 
-		/*Vector3 screenVertics[3];
-		for (int i = 0; i < 3; i++) {
-			Vector3 ndcvertex = Transform(kLocalVertices[i], worldViewProjectionMatrix);
-			screenVertics[i] = Transform(ndcvertex, viewportMatrix);
-		}*/
-		
+	
 
 		///
 		/// ↑更新処理ここまで
@@ -600,11 +593,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		DrawSphere({ sphereCenter, sphereRadius }, worldViewProjectionMatrix, viewportMatrix, BLACK);
 
-		/*Novice::DrawTriangle(
-			int(screenVertics[0].x), int(screenVertics[0].y),
-			int(screenVertics[1].x), int(screenVertics[1].y),
-			int(screenVertics[2].x), int(screenVertics[2].y),
-			RED, kFillModeSolid);*/
 		
 		Novice::ScreenPrintf(0, 20, "cameraPosition: %.02f, %.02f, %.02f", cameraPosition.x, cameraPosition.y, cameraPosition.z);
 		Novice::ScreenPrintf(0, 40, "cameraRotation: %.02f, %.02f, %.02f", cameraRotation.x, cameraRotation.y, cameraRotation.z);
