@@ -403,6 +403,33 @@ Matrix4x4 MakeViewportMatrix(float Left, float Top, float width, float height,fl
 }
 
 
+void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix)
+{
+	const float kGridHalfWidth = 2.0f;
+	const int kSubDivision = 10;
+	const float kGridEvery = (kGridHalfWidth * 2) / float(kSubDivision);
+
+	for (int xIndex = 0; xIndex <= kSubDivision; xIndex++) {
+		float x = -kGridHalfWidth + kGridEvery * xIndex;
+		Vector3 start = Transform({x, 0.0f, -kGridHalfWidth}, viewProjectionMatrix);
+		Vector3 end = Transform({x, 0.0f, kGridHalfWidth}, viewProjectionMatrix);
+		start = Transform(start, viewportMatrix);
+		end = Transform(end, viewportMatrix);
+		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), 0xFF0000FF);
+	}
+
+	for (int zIndex = 0; zIndex <= kSubDivision; zIndex++) {
+		float z = -kGridHalfWidth + kGridEvery * zIndex;
+		Vector3 start = Transform({-kGridHalfWidth, 0.0f, z}, viewProjectionMatrix);
+		Vector3 end = Transform({kGridHalfWidth, 0.0f, z}, viewProjectionMatrix);
+		start = Transform(start, viewportMatrix);
+		end = Transform(end, viewportMatrix);
+		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), 0xFF0000FF);
+	}
+}
+
+
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
@@ -428,9 +455,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		/// ↓更新処理ここから
 		///
 		/// 
+		/// 
 		Matrix4x4 orthoMatrix = MakeOrthoGraphicMatrix(-160.f, 160.f, 200.0f, 300.0f, 0.0f, 1000.0f);
 		Matrix4x4 perspectiveMatrix = MakePerspectiveFovMatrix(0.63f, 1.33f, 0.1f, 1000.0f);
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(100.0f, 200.0f, 600.0f, 300.0f, 0.0f, 1.0f);
+		Matrix4x4 viewProjectionMatrix = Multiply(orthoMatrix, perspectiveMatrix);
 
 		///
 		/// ↑更新処理ここまで
