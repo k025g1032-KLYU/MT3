@@ -390,13 +390,13 @@ Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspect, float nearZ, float 
 	return result;
 }
 
-Matrix4x4 MakeViewportMatrix(float Left, float Top, float width, float height,float MaxD,float MinD) {
+Matrix4x4 MakeViewportMatrix(float left, float top, float width, float height,float MinD,float MaxD) {
 	Matrix4x4 result{};
 	result.m[0][0] = width / 2.0f;
 	result.m[1][1] = -height / 2.0f; // Y軸を反転
 	result.m[2][2] = MaxD-MinD;
-	result.m[3][0] = Left + width / 2.0f;
-	result.m[3][1] = Top + height / 2.0f;
+	result.m[3][0] = left + width / 2.0f;
+	result.m[3][1] = top + height / 2.0f;
 	result.m[3][2] = MinD;
 	result.m[3][3] = 1.0f;
 	return result;
