@@ -31,6 +31,13 @@ struct Segment {
 	Vector3 diff;
 };
 
+struct CenterSpinCamera {
+	Vector3 center;
+	float distance;
+	Vector3 offset;
+	Vector3 rotation;
+};
+
 Vector3 Add(const Vector3& v1, const Vector3& v2) {
 	Vector3 result{};
 	result.x = v1.x + v2.x;
@@ -529,6 +536,13 @@ bool IsCollision(const Sphere& sphere1, const Sphere& sphere2) {
 	}
 }
 
+float Distance(const Vector3 obj1Position, const Vector3 obj2Position) {
+	float distance = sqrtf((obj1Position.x - obj2Position.x) * (obj1Position.x - obj2Position.x) +
+		(obj1Position.y - obj2Position.y) * (obj1Position.y - obj2Position.y) +
+		(obj1Position.z - obj2Position.z) * (obj1Position.z - obj2Position.z));
+	return distance;
+}
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
@@ -537,7 +551,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	Vector3 rotate{ 0.0f,0.0f,0.0f };
 	Vector3 translate{ 0.0f, 0.0f, 0.0f };
-	Vector3 cameraPosition{ 0.0f, 1.0f, -10.0f };
+	Vector3 cameraPosition{ 0.0f, 0.0f, -10.0f };
 	Vector3 cameraRotation{ 0.0f, 0.0f, 0.0f };
 
 	Vector3 sphere1Center{ 0.0f, 1.0f, 0.0f };
@@ -561,6 +575,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	};
 	
 	
+	CenterSpinCamera cameraX{ {0.0f, 0.0f, 0.0f}, 10.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
+
+	cameraX.distance = Distance(cameraX.center, cameraPosition);
+	cameraX.offset = Subtract(cameraPosition, cameraX.center);
+	
+
+	
+
 	// キー入力結果を受け取る箱
 	char keys[256] = {0};
 	char preKeys[256] = {0};
@@ -606,21 +628,26 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		if (keys[DIK_D])
 		{
-			translate.x += 0.1f;
+			cameraX.rotation.y += 0.02f;
 		}
 		if (keys[DIK_A])
 		{
-			translate.x -= 0.1f;
+			cameraX.rotation.y -= 0.02f;
 		}
 		if (keys[DIK_W])
 		{
-			translate.z += 0.1f;
+			cameraX.rotation.x += 0.02f;
 		}
 		if (keys[DIK_S])
 		{
-			translate.z -= 0.1f;
+			cameraX.rotation.x -= 0.02f;
 		}
 		
+		Matrix4x4 rotateXMatrix = Multiply(Multiply(MakeRotationXMatrix(rotate.x), MakeRotationYMatrix(rotate.y)), MakeRotationZMatrix(rotate.z));
+		Vector3 rotatedOffset = Transform(cameraX.offset, rotateXMatrix);
+		
+
+
 
 		
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, rotate, translate);
