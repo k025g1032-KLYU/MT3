@@ -1,6 +1,6 @@
 #include <Novice.h>
 #define _USE_MATH_DEFINES 
-#include <math.h>
+#include <cmath>
 #include <imgui.h>
 
 const char kWindowTitle[] = "GC1A_11_ヨ_カンリン_タイトル";
@@ -314,10 +314,10 @@ Matrix4x4 MakeRotationXMatrix(float radian) {
 	Matrix4x4 result{};
 
 	result.m[0][0] = 1.0f;
-	result.m[1][1] = cosf(radian);
-	result.m[1][2] = sinf(radian);
-	result.m[2][1] = -sinf(radian);
-	result.m[2][2] = cosf(radian);
+	result.m[1][1] = std::cos(radian);
+	result.m[1][2] = std::sin(radian);
+	result.m[2][1] = -std::sin(radian);
+	result.m[2][2] = std::cos(radian);
 	result.m[3][3] = 1.0f;
 
 	return result;
@@ -326,11 +326,11 @@ Matrix4x4 MakeRotationXMatrix(float radian) {
 Matrix4x4 MakeRotationYMatrix(float radian) {
 	Matrix4x4 result{};
 
-	result.m[0][0] = cosf(radian);
-	result.m[0][2] = -sinf(radian);
+	result.m[0][0] = std::cos(radian);
+	result.m[0][2] = -std::sin(radian);
 	result.m[1][1] = 1.0f;
-	result.m[2][0] = sinf(radian);
-	result.m[2][2] = cosf(radian);
+	result.m[2][0] = std::sin(radian);
+	result.m[2][2] = std::cos(radian);
 	result.m[3][3] = 1.0f;
 
 	return result;
@@ -339,10 +339,10 @@ Matrix4x4 MakeRotationYMatrix(float radian) {
 Matrix4x4 MakeRotationZMatrix(float radian) {
 	Matrix4x4 result{};
 
-	result.m[0][0] = cosf(radian);
-	result.m[0][1] = sinf(radian);
-	result.m[1][0] = -sinf(radian);
-	result.m[1][1] = cosf(radian);
+	result.m[0][0] = std::cos(radian);
+	result.m[0][1] = std::sin(radian);
+	result.m[1][0] = -std::sin(radian);
+	result.m[1][1] = std::cos(radian);
 	result.m[2][2] = 1.0f;
 	result.m[3][3] = 1.0f;
 
@@ -469,21 +469,21 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 			float lonA = kLonEvery * lonIndex;
 			float lonC = kLonEvery * (lonIndex + 1);
 			Vector3 pointOnSphereA;
-			pointOnSphereA.x = sphere.center.x + sphere.radius * cosf(latA) * cosf(lonA);
-			pointOnSphereA.y = sphere.center.y + sphere.radius * sinf(latA);
-			pointOnSphereA.z = sphere.center.z + sphere.radius * cosf(latA) * sinf(lonA);
+			pointOnSphereA.x = sphere.center.x + sphere.radius * std::cos(latA) * std::cos(lonA);
+			pointOnSphereA.y = sphere.center.y + sphere.radius * std::sin(latA);
+			pointOnSphereA.z = sphere.center.z + sphere.radius * std::cos(latA) * std::sin(lonA);
 			
 
 			Vector3 pointOnSphereB;
-			pointOnSphereB.x = sphere.center.x + sphere.radius * cosf(latB) * cosf(lonA);
-			pointOnSphereB.y = sphere.center.y + sphere.radius * sinf(latB);
-			pointOnSphereB.z = sphere.center.z + sphere.radius * cosf(latB) * sinf(lonA);
+			pointOnSphereB.x = sphere.center.x + sphere.radius * std::cos(latB) * std::cos(lonA);
+			pointOnSphereB.y = sphere.center.y + sphere.radius * std::sin(latB);
+			pointOnSphereB.z = sphere.center.z + sphere.radius * std::cos(latB) * std::sin(lonA);
 			
 
 			Vector3 pointOnSphereC;
-			pointOnSphereC.x = sphere.center.x + sphere.radius * cosf(latA) * cosf(lonC);
-			pointOnSphereC.y = sphere.center.y + sphere.radius * sinf(latA);
-			pointOnSphereC.z = sphere.center.z + sphere.radius * cosf(latA) * sinf(lonC);
+			pointOnSphereC.x = sphere.center.x + sphere.radius * std::cos(latA) * std::cos(lonC);
+			pointOnSphereC.y = sphere.center.y + sphere.radius * std::sin(latA);
+			pointOnSphereC.z = sphere.center.z + sphere.radius * std::cos(latA) * std::sin(lonC);
 			
 
 
