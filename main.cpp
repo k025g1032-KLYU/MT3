@@ -443,7 +443,7 @@ void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMa
 		Vector3 end = Transform({ x, 0.0f, kGridHalfWidth }, viewProjectionMatrix);
 		start = Transform(start, viewportMatrix);
 		end = Transform(end, viewportMatrix);
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), 0xFF0000FF);
+		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), BLACK);
 	}
 
 	for (int zIndex = 0; zIndex <= kSubDivision; zIndex++) {
@@ -452,7 +452,7 @@ void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMa
 		Vector3 end = Transform({ kGridHalfWidth, 0.0f, z }, viewProjectionMatrix);
 		start = Transform(start, viewportMatrix);
 		end = Transform(end, viewportMatrix);
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), 0xFF0000FF);
+		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), BLACK);
 	}
 }
 
@@ -514,6 +514,21 @@ Vector3 ClosestPoint(const Vector3& point, const Segment& segment) {
 	return Add(segment.origin, Multiply(direction, Dot(toPoint, direction)));
 }
 
+
+bool IsCollision(const Sphere& sphere1, const Sphere& sphere2) {
+	float distanceSq = (sphere1.center.x - sphere2.center.x) * (sphere1.center.x - sphere2.center.x) +
+		(sphere1.center.y - sphere2.center.y) * (sphere1.center.y - sphere2.center.y) +
+		(sphere1.center.z - sphere2.center.z) * (sphere1.center.z - sphere2.center.z);
+	float radiusSum = sphere1.radius + sphere2.radius;
+	if (distanceSq > radiusSum * radiusSum) {
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
@@ -525,8 +540,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Vector3 cameraPosition{ 0.0f, 1.0f, -10.0f };
 	Vector3 cameraRotation{ 0.0f, 0.0f, 0.0f };
 
-	Vector3 sphereCenter{ 0.0f, 0.0f, 0.0f };
-	float sphereRadius = 0.05f;
+	Vector3 sphere1Center{ 0.0f, 1.0f, 0.0f };
+	float sphere1Radius = 0.1f;
+
+	Vector3 sphere2Center{ 0.0f, 2.0f, 0.0f };
+	float sphere2Radius = 0.3f;
 
 	Segment segment{ { -2.0f, -1.0f, 0.0f }, { 3.0f, 2.0f, 2.0f } };
 	Vector3 point{ -1.5f,0.6f,0.6f };
@@ -614,13 +632,16 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 
-		Sphere sphere{ sphereCenter, sphereRadius };
+		/*Sphere sphere{ sphereCenter, sphereRadius };
 		Sphere pointSphere{ point, sphereRadius };
 		Sphere closestPointSphere{ closestPoint, sphereRadius };
 
 		Vector3 start = Transform(Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
 		Vector3 end = Transform(Transform(Add(segment.origin, segment.diff), worldViewProjectionMatrix), viewportMatrix);
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), 0xFFFFFF00);
+		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), 0xFFFFFF00);*/
+
+		Sphere sphere1{ sphere1Center, sphere1Radius };
+		Sphere sphere2{ sphere2Center, sphere2Radius };
 
 
 		///
@@ -631,11 +652,25 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		/// ↓描画処理ここから
 		///
 
-		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, BLUE);
-		DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
-		DrawSphere(closestPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		//DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, BLUE);
+		//DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
+		//DrawSphere(closestPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
 
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
+		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
+		int sphere1Color = WHITE;
+
+		if(IsCollision(sphere1, sphere2))
+		{
+			sphere1Color = RED;
+		}
+		else
+		{
+			sphere1Color = WHITE;
+		}
+
+
+		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphere1Color);
+		DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, WHITE);
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		
@@ -645,8 +680,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::Begin("Debug Window");
 		ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
-		ImGui::DragFloat3("Sphere Center", &sphereCenter.x, 0.01f);
-		ImGui::DragFloat("Sphere Radius", &sphereRadius, 0.01f);
+		ImGui::DragFloat3("Sphere1 Center", &sphere1Center.x, 0.01f);
+		ImGui::DragFloat("Sphere1 Radius", &sphere1Radius, 0.01f);
 		ImGui::InputFloat3("Project", &project.x,"%.3f",ImGuiInputTextFlags_ReadOnly);
 		ImGui::End();
 
