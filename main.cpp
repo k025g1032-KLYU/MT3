@@ -528,31 +528,6 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 	}
 }
 
-//void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, int color)
-//{
-//	Vector3 center = Multiply(plane.normal, plane.distance);
-//	Vector3 perpendiculusars[4];
-//	perpendiculusars[0] = Normalize(Perpendiculusar(plane.normal));
-//	perpendiculusars[1] = {-perpendiculusars[0].x,-perpendiculusars[0].y,-perpendiculusars[0].z};
-//	perpendiculusars[2] = Cross(plane.normal, perpendiculusars[0]);
-//	perpendiculusars[3] = { -perpendiculusars[2].x,-perpendiculusars[2].y,-perpendiculusars[2].z };
-//
-//	Vector3 points[4];
-//	for (int index = 0; index < 4; ++index) 
-//	{
-//		Vector3 extend = Multiply(perpendiculusars[index],2.0f );
-//		Vector3 point = Add(center, extend);
-//		points[index] =Transform(Transform(point, viewProjectionMatrix),viewportMatrix);
-//	}
-//
-//	Novice::DrawLine(int(points[0].x), int(points[0].y), int(points[3].x), int(points[3].y), color);
-//	Novice::DrawLine(int(points[3].x), int(points[3].y), int(points[1].x), int(points[1].y), color);
-//	Novice::DrawLine(int(points[1].x), int(points[1].y), int(points[2].x), int(points[2].y), color);
-//	Novice::DrawLine(int(points[2].x), int(points[2].y), int(points[0].x), int(points[0].y), color);
-//
-//
-//}
-
 void DrawPlane(
 	const Plane& plane,
 	const Matrix4x4& viewProjectionMatrix,
@@ -605,12 +580,7 @@ bool BxBCollision(const Sphere& sphere1, const Sphere& sphere2) {
 	}
 }
 
-//bool IsCollision(const Sphere& sphere, const Plane& plane)
-//{
-//	float distance = Dot(plane.normal, sphere.center) - plane.distance;
-//	return std::abs(distance) <= sphere.radius;
-//}
-bool IsCollision(const Sphere& sphere, const Plane& plane)
+bool BxPCollision(const Sphere& sphere, const Plane& plane)
 {
 	Vector3 normal = Normalize(plane.normal);
 
@@ -618,6 +588,26 @@ bool IsCollision(const Sphere& sphere, const Plane& plane)
 		Dot(normal, sphere.center) - plane.distance;
 
 	return std::abs(distance) <= sphere.radius;
+}
+
+bool IsCollision(const Segment& segment, const Plane& plane)
+{
+	Vector3 normal = Normalize(plane.normal);
+
+	float dot = Dot(segment.diff, normal);
+
+	// 線段和平面平行
+	if (dot == 0.0f)
+	{
+		return false;
+	}
+
+	float t =
+		(plane.distance - Dot(segment.origin, normal))
+		/ dot;
+
+	// t 在 0~1 之間，代表碰撞點在線段範圍內
+	return 0.0f <= t && t <= 1.0f;
 }
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -744,7 +734,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
 		int sphere1Color = WHITE;
 
-		if(IsCollision(sphere1, plane))
+		if(IsCollision(segment, plane))
 		{
 			sphere1Color = RED;
 		}
@@ -754,7 +744,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		}
 
 
-		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphere1Color);
+		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphere1Color);
+		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, BLACK);
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
