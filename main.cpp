@@ -682,6 +682,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
 		ImGui::DragFloat3("Sphere1 Center", &sphere1Center.x, 0.01f);
 		ImGui::DragFloat("Sphere1 Radius", &sphere1Radius, 0.01f);
+		ImGui::DragFloat3("Sphere2 Center", &sphere2Center.x, 0.01f);
+		ImGui::DragFloat("Sphere2 Radius", &sphere2Radius, 0.01f);
 		ImGui::InputFloat3("Project", &project.x,"%.3f",ImGuiInputTextFlags_ReadOnly);
 		ImGui::End();
 
