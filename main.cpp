@@ -630,10 +630,10 @@ bool SxPCollision(const Segment& segment, const Plane& plane)
 	return 0.0f <= t && t <= 1.0f;
 }
 
-bool IsCollision(const Triangle& triangle, const Segment& segment)
-{
-	
-}
+//bool IsCollision(const Triangle& triangle, const Segment& segment)
+//{
+//	
+//}
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
@@ -649,7 +649,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Vector3 sphere1Center{ 0.0f, 1.0f, 0.0f };
 	float sphere1Radius = 0.1f;
 
-	Vector3 planeCenter{ 0.0f, 2.0f, 0.0f };
+	Vector3 planeCenter{ 0.0f, 0.0f, 1.0f };
 	float planeDistance = 1.0f;
 
 	Segment segment{ { -2.0f, -1.0f, 0.0f }, { 3.0f, 2.0f, 2.0f } };
@@ -760,7 +760,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
 		int segmentColor = WHITE;
 
-		if(IsCollision(segment))
+		if(SxPCollision(segment, plane))
 		{
 			segmentColor = RED;
 		}
