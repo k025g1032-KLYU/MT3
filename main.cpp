@@ -565,6 +565,12 @@ void DrawPlane(
 	Novice::DrawLine(int(points[2].x), int(points[2].y), int(points[0].x), int(points[0].y), color);
 }
 
+void DrawSegment(const Segment& segment, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, int color)
+{
+	Vector3 start = Transform(Transform(segment.origin, viewProjectionMatrix), viewportMatrix);
+	Vector3 end = Transform(Transform(Add(segment.origin, segment.diff), viewProjectionMatrix), viewportMatrix);
+	Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
+}
 
 bool BxBCollision(const Sphere& sphere1, const Sphere& sphere2) {
 	float distanceSq = (sphere1.center.x - sphere2.center.x) * (sphere1.center.x - sphere2.center.x) +
@@ -717,6 +723,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		Sphere sphere1{ sphere1Center, sphere1Radius };
 		Plane plane{ planeCenter, planeDistance };
 	
+	
 
 
 		///
@@ -732,20 +739,20 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		//DrawSphere(closestPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
 
 		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
-		int sphere1Color = WHITE;
+		int segmentColor = WHITE;
 
 		if(IsCollision(segment, plane))
 		{
-			sphere1Color = RED;
+			segmentColor = RED;
 		}
 		else
 		{
-			sphere1Color = WHITE;
+			segmentColor = WHITE;
 		}
 
 
 		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphere1Color);
-		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, segmentColor);
 		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, BLACK);
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
@@ -753,8 +760,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::Begin("Debug Window");
 		ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
-		ImGui::DragFloat3("Sphere1 Center", &sphere1Center.x, 0.01f);
-		ImGui::DragFloat("Sphere1 Radius", &sphere1Radius, 0.01f);
+		ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
+		ImGui::DragFloat3("Segment Diff", &segment.diff.x, 0.01f);
 		ImGui::DragFloat3("Plane Center", &planeCenter.x, 0.01f);
 		ImGui::DragFloat("Plane Distance", &planeDistance, 0.01f);
 		ImGui::InputFloat3("Project", &project.x,"%.3f",ImGuiInputTextFlags_ReadOnly);
