@@ -634,7 +634,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Vector3 sphere1Center{ 0.0f, 1.0f, 0.0f };
 	float sphere1Radius = 0.1f;
 
-	Vector3 planeCenter{ 0.0f, 2.0f, 0.0f };
+	Vector3 planeNormal{ 0.0f, 2.0f, 0.0f };
 	float planeDistance = 1.0f;
 
 	Segment segment{ { -2.0f, -1.0f, 0.0f }, { 3.0f, 2.0f, 2.0f } };
@@ -725,7 +725,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		
 		Sphere sphere1{ sphere1Center, sphere1Radius };
-		Plane plane{ planeCenter, planeDistance };
+		Plane plane{ Normalize(planeNormal), planeDistance };
 	
 
 
@@ -764,7 +764,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
 		ImGui::DragFloat3("Sphere1 Center", &sphere1Center.x, 0.01f);
 		ImGui::DragFloat("Sphere1 Radius", &sphere1Radius, 0.01f);
-		ImGui::DragFloat3("Plane Center", &planeCenter.x, 0.01f);
+		ImGui::DragFloat3("Plane Normal", &planeNormal.x, 0.01f);
+		if (Length(planeNormal) != 0.0f)
+		{
+			planeNormal = Normalize(planeNormal);
+		}
 		ImGui::DragFloat("Plane Distance", &planeDistance, 0.01f);
 		ImGui::InputFloat3("Project", &project.x,"%.3f",ImGuiInputTextFlags_ReadOnly);
 		ImGui::End();
