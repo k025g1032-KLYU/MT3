@@ -36,6 +36,10 @@ struct Plane {
 	float distance;
 };
 
+struct Triangle {
+	Vector3 vertics[3];
+};
+
 Vector3 Add(const Vector3& v1, const Vector3& v2) {
 	Vector3 result{};
 	result.x = v1.x + v2.x;
@@ -564,6 +568,16 @@ void DrawPlane(
 	Novice::DrawLine(int(points[1].x), int(points[1].y), int(points[2].x), int(points[2].y), color);
 	Novice::DrawLine(int(points[2].x), int(points[2].y), int(points[0].x), int(points[0].y), color);
 }
+void DarwTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, int color)
+{
+	Vector3 screenVertices[3];
+	for (int i = 0; i < 3; i++) {
+		screenVertices[i] = Transform(Transform(triangle.vertics[i], viewProjectionMatrix), viewportMatrix);
+	}
+	Novice::DrawLine(int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y), color);
+	Novice::DrawLine(int(screenVertices[1].x), int(screenVertices[1].y), int(screenVertices[2].x), int(screenVertices[2].y), color);
+	Novice::DrawLine(int(screenVertices[2].x), int(screenVertices[2].y), int(screenVertices[0].x), int(screenVertices[0].y), color);
+}
 
 void DrawSegment(const Segment& segment, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, int color)
 {
@@ -596,7 +610,7 @@ bool BxPCollision(const Sphere& sphere, const Plane& plane)
 	return std::abs(distance) <= sphere.radius;
 }
 
-bool IsCollision(const Segment& segment, const Plane& plane)
+bool SxPCollision(const Segment& segment, const Plane& plane)
 {
 	Vector3 normal = Normalize(plane.normal);
 
@@ -614,6 +628,11 @@ bool IsCollision(const Segment& segment, const Plane& plane)
 
 	// t 在 0~1 之間，代表碰撞點在線段範圍內
 	return 0.0f <= t && t <= 1.0f;
+}
+
+bool IsCollision(const Triangle& triangle, const Segment& segment)
+{
+	
 }
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -741,7 +760,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
 		int segmentColor = WHITE;
 
-		if(IsCollision(segment, plane))
+		if(IsCollision(segment))
 		{
 			segmentColor = RED;
 		}
