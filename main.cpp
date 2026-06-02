@@ -2,6 +2,7 @@
 #define _USE_MATH_DEFINES 
 #include <math.h>
 #include <imgui.h>
+#include <algorithm>
 
 const char kWindowTitle[] = "GC1A_11_ヨ_カンリン_タイトル";
 
@@ -509,9 +510,26 @@ Vector3 Project(const Vector3& v1, const Vector3& v2) {
 }
 
 Vector3 ClosestPoint(const Vector3& point, const Segment& segment) {
-	Vector3 toPoint = Subtract(point, segment.origin);
+	/*Vector3 toPoint = Subtract(point, segment.origin);
 	Vector3 direction = Normalize(segment.diff);
-	return Add(segment.origin, Multiply(direction, Dot(toPoint, direction)));
+	return Add(segment.origin, Multiply(direction, Dot(toPoint, direction)));*/
+
+	Vector3 diff = segment.diff;
+
+	Vector3 toPoint =
+		Subtract(point, segment.origin);
+
+	float lengthSq =
+		Dot(diff, diff);
+
+	float t =
+		Dot(toPoint, diff) / lengthSq;
+
+	t = std::clamp(t, 0.0f, 1.0f);
+
+	return Add(
+		segment.origin,
+		Multiply(diff, t));
 }
 
 // Windowsアプリでのエントリーポイント(main関数)
