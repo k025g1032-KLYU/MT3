@@ -690,8 +690,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	/*Vector3 sphere1Center{ 0.0f, 1.0f, 0.0f };
 	float sphere1Radius = 0.1f;*/
 
-	Vector3 planeCenter{ 0.0f, 0.0f, 1.0f };
-	float planeDistance = 1.0f;
+	//Vector3 planeCenter{ 0.0f, 0.0f, 1.0f };
+	//float planeDistance = 1.0f;
 
 	Triangle triangle{
 	{
@@ -701,7 +701,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	}
 	};
 
-	Segment segment{ { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, -2.0f } };
+	Segment segment{ { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.5f, -2.0f } };
 	Vector3 point{ -1.5f,0.6f,0.6f };
 	Vector3 project = Project(Subtract(point, segment.origin), segment.diff);
 	Vector3 closestPoint = ClosestPoint(point,segment);
@@ -821,8 +821,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
 		ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
 		ImGui::DragFloat3("Segment Diff", &segment.diff.x, 0.01f);
-		ImGui::DragFloat3("Plane Center", &planeCenter.x, 0.01f);
-		ImGui::DragFloat("Plane Distance", &planeDistance, 0.01f);
+		/*ImGui::DragFloat3("Plane Center", &planeCenter.x, 0.01f);
+		ImGui::DragFloat("Plane Distance", &planeDistance, 0.01f);*/
 		ImGui::InputFloat3("Project", &project.x,"%.3f",ImGuiInputTextFlags_ReadOnly);
 		ImGui::End();
 
