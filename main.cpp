@@ -788,7 +788,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		if (Novice::IsPressMouse(1))
 		{
 			cameraTheta += float(mousePos.x - prevMousePos.x) * 0.01f;
-			cameraPhi += float(mousePos.y - prevMousePos.y) * 0.001f;
+			cameraPhi += float(mousePos.y - prevMousePos.y) * 0.01f;
 
 			cameraPhi = std::clamp(cameraPhi, -1.4f, 1.4f);
 
@@ -809,8 +809,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				std::cos(cameraPhi) *
 				std::cos(cameraTheta);
 
-			cameraRotation.x = -cameraPhi;
+			cameraRotation.x = cameraPhi;
 			cameraRotation.y = -cameraTheta;
+			cameraRotation.z = 0.0f;
 		}
 		
 
