@@ -2,8 +2,17 @@
 #define _USE_MATH_DEFINES 
 #include <cmath>
 #include <imgui.h>
+#include <algorithm>
 
 const char kWindowTitle[] = "GC1A_11_ヨ_カンリン_タイトル";
+
+struct mousePosition {
+	int x;
+	int y;
+};
+
+mousePosition mousePos;
+mousePosition prevMousePos;
 
 struct Vector3 {
 	float x;
@@ -687,6 +696,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Vector3 cameraPosition{ 0.0f, 1.0f, -10.0f };
 	Vector3 cameraRotation{ 0.0f, 0.0f, 0.0f };
 
+	Vector3 cameraTarget{ 0.0f, 0.0f, 0.0f };
+	float cameraTheta = 0.0f;
+	float cameraRadius = 10.0f;
+	float cameraHeight = 3.0f;
+	float cameraPhi = 0.0f;
+
 	/*Vector3 sphere1Center{ 0.0f, 1.0f, 0.0f };
 	float sphere1Radius = 0.1f;*/
 
@@ -728,10 +743,19 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		// キー入力を受け取る
 		memcpy(preKeys, keys, 256);
 		Novice::GetHitKeyStateAll(keys);
+		
+		prevMousePos = mousePos;
+		Novice::GetMousePosition(&mousePos.x, &mousePos.y);
 
 		///
 		/// ↓更新処理ここから
 		///
+		
+		Novice::GetMousePosition(&mousePos.x, &mousePos.y);
+
+		Novice::ScreenPrintf(0, 0, "Mouse Position: (%d, %d)", int(mousePos.x), int(mousePos.y));
+		Novice::ScreenPrintf(0, 20, "Previous Mouse Position: (%d, %d)", int(prevMousePos.x), int(prevMousePos.y));
+
 		
 		if (keys[DIK_RIGHT])
 		{
@@ -749,13 +773,54 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		{
 			cameraPosition.y -= 0.1f;
 		}
+
 		if (keys[DIK_K])
 		{
-			cameraRotation.y += 0.01f;
+			cameraTheta += 0.02f;
+
 		}
 		if (keys[DIK_L])
 		{
-			cameraRotation.y -= 0.01f;
+			cameraTheta -= 0.02f;
+		}
+
+		
+		if (Novice::IsPressMouse(1))
+		{
+			
+			cameraTheta += float(mousePos.x - prevMousePos.x) * 0.01f;
+			cameraPhi += float(mousePos.y - prevMousePos.y) * 0.01f;
+
+			cameraPhi = std::clamp(cameraPhi, -1.4f, 1.4f);
+
+			cameraPosition.x =
+				cameraTarget.x +
+				cameraRadius *
+				std::cos(cameraPhi) *
+				std::sin(cameraTheta);
+
+			cameraPosition.y =
+				cameraTarget.y +
+				cameraRadius *
+				std::sin(cameraPhi);
+
+			cameraPosition.z =
+				cameraTarget.z -
+				cameraRadius *
+				std::cos(cameraPhi) *
+				std::cos(cameraTheta);
+
+			cameraRotation.x = -cameraPhi;
+			cameraRotation.y = -cameraTheta;
+
+
+			/*cameraPosition.x = cameraTarget.x + std::sin(cameraTheta) * cameraRadius;
+			cameraPosition.y = cameraTarget.y + cameraHeight;
+			cameraPosition.z = cameraTarget.z - std::cos(cameraTheta) * cameraRadius;
+
+			cameraRotation.x = 0.3f;
+			cameraRotation.y = -cameraTheta;
+			cameraRotation.z = 0.0f;*/
 		}
 		
 
@@ -776,7 +841,20 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			translate.z -= 0.1f;
 		}
 		
+		if (keys[DIK_R])
+		{
+			rotate={ 0.0f,0.0f,0.0f };
+			translate={ 0.0f, 0.0f, 0.0f };
+			cameraPosition={ 0.0f, 1.0f, -10.0f };
+			cameraRotation={ 0.0f, 0.0f, 0.0f };
 
+			cameraTarget={ 0.0f, 0.0f, 0.0f };
+			cameraTheta = 0.0f;
+			cameraRadius = 10.0f;
+			cameraHeight = 3.0f;
+			cameraPhi = 0.0f;
+		}
+		
 		
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, rotate, translate);
 		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, cameraRotation, cameraPosition);
@@ -789,7 +867,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		
 		IsCollision(triangle, segment);
 	
-
+		prevMousePos = mousePos;
 
 		///
 		/// ↑更新処理ここまで
@@ -819,6 +897,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::Begin("Debug Window");
 		ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
+		ImGui::DragFloat3("Camera Target", &cameraTarget.x, 0.01f);
+		ImGui::DragFloat3("Triangle Vertex 0", &triangle.vertics[0].x, 0.01f);
+		ImGui::DragFloat3("Triangle Vertex 1", &triangle.vertics[1].x, 0.01f);
+		ImGui::DragFloat3("Triangle Vertex 2", &triangle.vertics[2].x, 0.01f);
 		ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
 		ImGui::DragFloat3("Segment Diff", &segment.diff.x, 0.01f);
 		/*ImGui::DragFloat3("Plane Center", &planeCenter.x, 0.01f);
