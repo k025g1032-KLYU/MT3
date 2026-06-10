@@ -787,9 +787,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		
 		if (Novice::IsPressMouse(1))
 		{
-			
 			cameraTheta += float(mousePos.x - prevMousePos.x) * 0.01f;
-			cameraPhi += float(mousePos.y - prevMousePos.y) * 0.01f;
+			cameraPhi += float(mousePos.y - prevMousePos.y) * 0.001f;
 
 			cameraPhi = std::clamp(cameraPhi, -1.4f, 1.4f);
 
@@ -812,15 +811,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			cameraRotation.x = -cameraPhi;
 			cameraRotation.y = -cameraTheta;
-
-
-			/*cameraPosition.x = cameraTarget.x + std::sin(cameraTheta) * cameraRadius;
-			cameraPosition.y = cameraTarget.y + cameraHeight;
-			cameraPosition.z = cameraTarget.z - std::cos(cameraTheta) * cameraRadius;
-
-			cameraRotation.x = 0.3f;
-			cameraRotation.y = -cameraTheta;
-			cameraRotation.z = 0.0f;*/
 		}
 		
 
@@ -888,7 +878,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		
 
-		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphere1Color);
+		DrawSphere({cameraTarget,0.01f}, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, segmentColor);
 		DarwTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, GREEN);
 
