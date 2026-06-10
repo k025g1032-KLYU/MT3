@@ -639,7 +639,7 @@ bool SxPCollision(const Segment& segment, const Plane& plane)
 	return 0.0f <= t && t <= 1.0f;
 }
 
-bool IsCollision(const Triangle& triangle, const Segment& segment)
+bool TxSCollision(const Triangle& triangle, const Segment& segment)
 {
 	//邊向量
 	Vector3 e01 = Subtract(triangle.vertics[1], triangle.vertics[0]);
@@ -680,10 +680,48 @@ bool IsCollision(const Triangle& triangle, const Segment& segment)
 
 }
 
-//bool IsCollision(const Triangle& triangle, const Segment& segment)
-//{
-//	
-//}
+
+
+Matrix4x4 MakeLookAtMatrix(
+	const Vector3& eye,
+	const Vector3& target,
+	const Vector3& up)
+{
+	Vector3 zAxis =
+		Normalize(Subtract(target, eye));
+
+	Vector3 xAxis =
+		Normalize(Cross(up, zAxis));
+
+	Vector3 yAxis =
+		Cross(zAxis, xAxis);
+
+	Matrix4x4 result{};
+
+	result.m[0][0] = xAxis.x;
+	result.m[1][0] = xAxis.y;
+	result.m[2][0] = xAxis.z;
+	result.m[3][0] = -Dot(eye, xAxis);
+
+	result.m[0][1] = yAxis.x;
+	result.m[1][1] = yAxis.y;
+	result.m[2][1] = yAxis.z;
+	result.m[3][1] = -Dot(eye, yAxis);
+
+	result.m[0][2] = zAxis.x;
+	result.m[1][2] = zAxis.y;
+	result.m[2][2] = zAxis.z;
+	result.m[3][2] = -Dot(eye, zAxis);
+
+	result.m[0][3] = 0.0f;
+	result.m[1][3] = 0.0f;
+	result.m[2][3] = 0.0f;
+	result.m[3][3] = 1.0f;
+
+	return result;
+}
+
+
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
@@ -857,15 +895,17 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		
 		
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, rotate, translate);
-		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, cameraRotation, cameraPosition);
-		
-		Matrix4x4 viewMatrix = Inverse(cameraMatrix);
+		Matrix4x4 viewMatrix =
+			MakeLookAtMatrix(
+				cameraPosition,
+				cameraTarget,
+				{ 0.0f,1.0f,0.0f });
 
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f , float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 		
-		IsCollision(triangle, segment);
+		TxSCollision(triangle, segment);
 	
 		prevMousePos = mousePos;
 
@@ -884,11 +924,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
 		int segmentColor = WHITE;
 
-		(IsCollision(triangle, segment)) ? segmentColor = RED : segmentColor = WHITE;
+		(TxSCollision(triangle, segment)) ? segmentColor = RED : segmentColor = WHITE;
 
 		
 
-		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphere1Color);
+		DrawSphere({ cameraTarget ,0.01f}, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, segmentColor);
 		DarwTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, GREEN);
 
