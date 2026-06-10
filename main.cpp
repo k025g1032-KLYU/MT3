@@ -630,6 +630,47 @@ bool SxPCollision(const Segment& segment, const Plane& plane)
 	return 0.0f <= t && t <= 1.0f;
 }
 
+bool IsCollision(const Triangle& triangle, const Segment& segment)
+{
+	//邊向量
+	Vector3 e01 = Subtract(triangle.vertics[1], triangle.vertics[0]);
+	Vector3 e02 = Subtract(triangle.vertics[2], triangle.vertics[0]);
+	//法線
+	Vector3 normal = Normalize(Cross(e01, e02));
+
+	// 線段方向向量t
+	float denominator = Dot(normal, segment.diff);
+
+	if (fabs(denominator) < 0.0001f)
+	{
+		// 平行
+		return false;
+	}
+
+	float t =
+		Dot(normal, Subtract(triangle.vertics[0], segment.origin))
+		/ denominator;
+
+	//P
+	Vector3 p = Add(segment.origin, Multiply(segment.diff, t));
+
+
+	Vector3 cross01 = Cross(Subtract(triangle.vertics[1], triangle.vertics[0]), Subtract(p, triangle.vertics[0]));
+	Vector3 cross02 = Cross(Subtract(triangle.vertics[2], triangle.vertics[1]), Subtract(p, triangle.vertics[1]));
+	Vector3 cross03 = Cross(Subtract(triangle.vertics[0], triangle.vertics[2]), Subtract(p, triangle.vertics[2]));
+
+	if (Dot(normal, cross01) >= 0 && Dot(normal, cross02) >= 0 && Dot(normal, cross03) >= 0)
+	{
+		// 碰撞
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+
+}
+
 //bool IsCollision(const Triangle& triangle, const Segment& segment)
 //{
 //	
@@ -646,13 +687,21 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Vector3 cameraPosition{ 0.0f, 1.0f, -10.0f };
 	Vector3 cameraRotation{ 0.0f, 0.0f, 0.0f };
 
-	Vector3 sphere1Center{ 0.0f, 1.0f, 0.0f };
-	float sphere1Radius = 0.1f;
+	/*Vector3 sphere1Center{ 0.0f, 1.0f, 0.0f };
+	float sphere1Radius = 0.1f;*/
 
 	Vector3 planeCenter{ 0.0f, 0.0f, 1.0f };
 	float planeDistance = 1.0f;
 
-	Segment segment{ { -2.0f, -1.0f, 0.0f }, { 3.0f, 2.0f, 2.0f } };
+	Triangle triangle{
+	{
+		{-0.5f,-0.1f,0.0f},
+		{ 0.5f,-0.1f,0.0f},
+		{ 0.0f,1.0f,0.0f}
+	}
+	};
+
+	Segment segment{ { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, -2.0f } };
 	Vector3 point{ -1.5f,0.6f,0.6f };
 	Vector3 project = Project(Subtract(point, segment.origin), segment.diff);
 	Vector3 closestPoint = ClosestPoint(point,segment);
@@ -737,11 +786,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f , float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
-
 		
-		Sphere sphere1{ sphere1Center, sphere1Radius };
-		Plane plane{ planeCenter, planeDistance };
-	
+		IsCollision(triangle, segment);
 	
 
 
@@ -760,19 +806,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
 		int segmentColor = WHITE;
 
-		if(SxPCollision(segment, plane))
-		{
-			segmentColor = RED;
-		}
-		else
-		{
-			segmentColor = WHITE;
-		}
+		(IsCollision(triangle, segment)) ? segmentColor = RED : segmentColor = WHITE;
 
+		
 
 		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphere1Color);
 		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, segmentColor);
-		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		DarwTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, GREEN);
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		
