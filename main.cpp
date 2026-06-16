@@ -730,6 +730,56 @@ bool AABBxBCollision(const AABB& aabb, const Sphere& sphere)
 	return distanceSq <= sphere.radius * sphere.radius;
 }
 
+bool AABBxSCollision(const AABB& aabb, const Segment& segment)
+{
+	float txMin =
+		(aabb.min.x - segment.origin.x) /
+		segment.diff.x;
+
+	float txMax =
+		(aabb.max.x - segment.origin.x) /
+		segment.diff.x;
+
+	if (txMin > txMax) {
+		std::swap(txMin, txMax);
+	}
+
+	float tyMin =
+		(aabb.min.y - segment.origin.y) /
+		segment.diff.y;
+
+	float tyMax =
+		(aabb.max.y - segment.origin.y) /
+		segment.diff.y;
+
+	if (tyMin > tyMax) {
+		std::swap(tyMin, tyMax);
+	}
+
+	float tzMin =
+		(aabb.min.z - segment.origin.z) /
+		segment.diff.z;
+
+	float tzMax =
+		(aabb.max.z - segment.origin.z) /
+		segment.diff.z;
+
+	if (tzMin > tzMax) {
+		std::swap(tzMin, tzMax);
+	}
+
+	float tNear =
+		(std::max)({ txMin, tyMin, tzMin });
+
+	float tFar =
+		(std::min)({ txMax, tyMax, tzMax });
+
+	return
+		tNear <= tFar &&
+		tFar >= 0.0f &&
+		tNear <= 1.0f;
+}
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
@@ -898,7 +948,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 		
-		AABBxBCollision(aabb1, sphere);
 	
 		prevMousePos = mousePos;
 
@@ -919,8 +968,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 
-		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, AABBxBCollision(aabb1, sphere) ? RED : WHITE);
-		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, AABBxBCollision(aabb1, sphere	) ? RED : WHITE);
+		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, AABBxSCollision(aabb1, segment) ? RED : WHITE);
+		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, AABBxSCollision(aabb1, segment) ? RED : WHITE);
+		//DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, AABBxBCollision(aabb1, sphere	) ? RED : WHITE);
 	
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
@@ -931,11 +981,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("Camera Target", &cameraTarget.x, 0.01f);
 		ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);
-		ImGui::DragFloat3("Sphere Center", &sphere.center.x, 0.01f);
-		ImGui::DragFloat("Sphere Radius", &sphere.radius, 0.01f);
+		/*ImGui::DragFloat3("Sphere Center", &sphere.center.x, 0.01f);
+		ImGui::DragFloat("Sphere Radius", &sphere.radius, 0.01f);*/
 		
-		/*ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
-		ImGui::DragFloat3("Segment Diff", &segment.diff.x, 0.01f);*/
+		ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
+		ImGui::DragFloat3("Segment Diff", &segment.diff.x, 0.01f);
 		/*ImGui::DragFloat3("Plane Center", &planeCenter.x, 0.01f);
 		ImGui::DragFloat("Plane Distance", &planeDistance, 0.01f);*/
 		//ImGui::InputFloat3("Project", &project.x,"%.3f",ImGuiInputTextFlags_ReadOnly);
