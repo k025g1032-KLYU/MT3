@@ -840,6 +840,36 @@ bool OBBxBCollision(const OBB& obb, const Sphere& sphere)
 	return Dot(difference, difference) <= sphere.radius * sphere.radius;
 }
 
+Vector3 ToLocalPoint(const Vector3& point, const OBB& obb)
+{
+	Vector3 p = Subtract(point, obb.center);
+
+	return {
+		Dot(p, obb.orientation[0]),
+		Dot(p, obb.orientation[1]),
+		Dot(p, obb.orientation[2])
+	};
+}
+
+bool OBBxSCollision(const OBB& obb, const Segment& segment)
+{
+	Segment localSegment;
+	localSegment.origin = ToLocalPoint(segment.origin, obb);
+	localSegment.diff = {
+		Dot(segment.diff, obb.orientation[0]),
+		Dot(segment.diff, obb.orientation[1]),
+		Dot(segment.diff, obb.orientation[2])
+	};
+
+	AABB localAABB;
+	localAABB.min = Multiply(obb.halfSize, -1.0f);
+	localAABB.max = obb.halfSize;
+
+	return AABBxSCollision(localAABB, localSegment);
+}
+
+
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
@@ -1035,9 +1065,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 
 		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, AABBxSCollision(aabb1, segment) ? RED : WHITE);
-		//DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, AABBxSCollision(aabb1, segment) ? RED : WHITE);
-		DrawOBB(obb, worldViewProjectionMatrix, viewportMatrix, OBBxBCollision(obb, sphere) ? RED : WHITE);
-		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, OBBxBCollision(obb, sphere) ? RED : WHITE);
+		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, OBBxSCollision(obb, segment) ? RED : WHITE);
+		DrawOBB(obb, worldViewProjectionMatrix, viewportMatrix, OBBxSCollision(obb, segment) ? RED : WHITE);
+		//DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, OBBxBCollision(obb, sphere) ? RED : WHITE);
 	
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
@@ -1053,11 +1083,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("OBB Orientation 1", &obb.orientation[1].x, 0.01f);
 		ImGui::DragFloat3("OBB Orientation 2", &obb.orientation[2].x, 0.01f);
 		ImGui::DragFloat3("OBB Half Size", &obb.halfSize.x, 0.01f);
-		ImGui::DragFloat3("Sphere Center", &sphere.center.x, 0.01f);
-		ImGui::DragFloat("Sphere Radius", &sphere.radius, 0.01f);
+		/*ImGui::DragFloat3("Sphere Center", &sphere.center.x, 0.01f);
+		ImGui::DragFloat("Sphere Radius", &sphere.radius, 0.01f);*/
 		
-		/*ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
-		ImGui::DragFloat3("Segment Diff", &segment.diff.x, 0.01f);*/
+		ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
+		ImGui::DragFloat3("Segment Diff", &segment.diff.x, 0.01f);
 		/*ImGui::DragFloat3("Plane Center", &planeCenter.x, 0.01f);
 		ImGui::DragFloat("Plane Distance", &planeDistance, 0.01f);*/
 		//ImGui::InputFloat3("Project", &project.x,"%.3f",ImGuiInputTextFlags_ReadOnly);
