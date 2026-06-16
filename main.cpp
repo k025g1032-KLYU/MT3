@@ -46,7 +46,7 @@ struct Plane {
 };
 
 struct Triangle {
-	Vector3 vertics[3];
+	Vector3 vertices[3];
 };
 
 Vector3 Add(const Vector3& v1, const Vector3& v2) {
@@ -577,11 +577,11 @@ void DrawPlane(
 	Novice::DrawLine(int(points[1].x), int(points[1].y), int(points[2].x), int(points[2].y), color);
 	Novice::DrawLine(int(points[2].x), int(points[2].y), int(points[0].x), int(points[0].y), color);
 }
-void DarwTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, int color)
+void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, int color)
 {
 	Vector3 screenVertices[3];
 	for (int i = 0; i < 3; i++) {
-		screenVertices[i] = Transform(Transform(triangle.vertics[i], viewProjectionMatrix), viewportMatrix);
+		screenVertices[i] = Transform(Transform(triangle.vertices[i], viewProjectionMatrix), viewportMatrix);
 	}
 	Novice::DrawLine(int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y), color);
 	Novice::DrawLine(int(screenVertices[1].x), int(screenVertices[1].y), int(screenVertices[2].x), int(screenVertices[2].y), color);
@@ -642,8 +642,8 @@ bool SxPCollision(const Segment& segment, const Plane& plane)
 bool IsCollision(const Triangle& triangle, const Segment& segment)
 {
 	//邊向量
-	Vector3 e01 = Subtract(triangle.vertics[1], triangle.vertics[0]);
-	Vector3 e02 = Subtract(triangle.vertics[2], triangle.vertics[0]);
+	Vector3 e01 = Subtract(triangle.vertices[1], triangle.vertices[0]);
+	Vector3 e02 = Subtract(triangle.vertices[2], triangle.vertices[0]);
 	//法線
 	Vector3 normal = Normalize(Cross(e01, e02));
 
@@ -657,16 +657,20 @@ bool IsCollision(const Triangle& triangle, const Segment& segment)
 	}
 
 	float t =
-		Dot(normal, Subtract(triangle.vertics[0], segment.origin))
+		Dot(normal, Subtract(triangle.vertices[0], segment.origin))
 		/ denominator;
+
+	if (t < 0.0f || t > 1.0f) {
+		return false;
+	}
 
 	//P
 	Vector3 p = Add(segment.origin, Multiply(segment.diff, t));
 
 
-	Vector3 cross01 = Cross(Subtract(triangle.vertics[1], triangle.vertics[0]), Subtract(p, triangle.vertics[0]));
-	Vector3 cross02 = Cross(Subtract(triangle.vertics[2], triangle.vertics[1]), Subtract(p, triangle.vertics[1]));
-	Vector3 cross03 = Cross(Subtract(triangle.vertics[0], triangle.vertics[2]), Subtract(p, triangle.vertics[2]));
+	Vector3 cross01 = Cross(Subtract(triangle.vertices[1], triangle.vertices[0]), Subtract(p, triangle.vertices[0]));
+	Vector3 cross02 = Cross(Subtract(triangle.vertices[2], triangle.vertices[1]), Subtract(p, triangle.vertices[1]));
+	Vector3 cross03 = Cross(Subtract(triangle.vertices[0], triangle.vertices[2]), Subtract(p, triangle.vertices[2]));
 
 	if (Dot(normal, cross01) >= 0 && Dot(normal, cross02) >= 0 && Dot(normal, cross03) >= 0)
 	{
@@ -881,7 +885,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		DrawSphere({cameraTarget,0.01f}, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, segmentColor);
-		DarwTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, GREEN);
+		DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, GREEN);
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		
@@ -889,9 +893,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
 		ImGui::DragFloat3("Camera Target", &cameraTarget.x, 0.01f);
-		ImGui::DragFloat3("Triangle Vertex 0", &triangle.vertics[0].x, 0.01f);
-		ImGui::DragFloat3("Triangle Vertex 1", &triangle.vertics[1].x, 0.01f);
-		ImGui::DragFloat3("Triangle Vertex 2", &triangle.vertics[2].x, 0.01f);
+		ImGui::DragFloat3("Triangle Vertex 0", &triangle.vertices[0].x, 0.01f);
+		ImGui::DragFloat3("Triangle Vertex 1", &triangle.vertices[1].x, 0.01f);
+		ImGui::DragFloat3("Triangle Vertex 2", &triangle.vertices[2].x, 0.01f);
 		ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
 		ImGui::DragFloat3("Segment Diff", &segment.diff.x, 0.01f);
 		/*ImGui::DragFloat3("Plane Center", &planeCenter.x, 0.01f);
