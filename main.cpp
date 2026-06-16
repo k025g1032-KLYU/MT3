@@ -872,6 +872,64 @@ bool OBBxSCollision(const OBB& obb, const Segment& segment)
 }
 
 
+float Abs(float value)
+{
+	return value < 0.0f ? -value : value;
+}
+
+float GetOBBProjectionRadius(const OBB& obb, const Vector3& axis)
+{
+	return
+		obb.halfSize.x * Abs(Dot(axis, obb.orientation[0])) +
+		obb.halfSize.y * Abs(Dot(axis, obb.orientation[1])) +
+		obb.halfSize.z * Abs(Dot(axis, obb.orientation[2]));
+}
+
+bool TestSeparatingAxis(const OBB& obb1, const OBB& obb2, const Vector3& axis)
+{
+	if (Length(axis) < 0.0001f) {
+		return true;
+	}
+
+	Vector3 normalizedAxis = Normalize(axis);
+
+	float r1 = GetOBBProjectionRadius(obb1, normalizedAxis);
+	float r2 = GetOBBProjectionRadius(obb2, normalizedAxis);
+
+	Vector3 centerDiff = Subtract(obb2.center, obb1.center);
+	float distance = Abs(Dot(centerDiff, normalizedAxis));
+
+	return distance <= r1 + r2;
+}
+bool OBBCollision(const OBB& obb1, const OBB& obb2)
+{
+	Vector3 axes[15];
+
+	axes[0] = obb1.orientation[0];
+	axes[1] = obb1.orientation[1];
+	axes[2] = obb1.orientation[2];
+
+	axes[3] = obb2.orientation[0];
+	axes[4] = obb2.orientation[1];
+	axes[5] = obb2.orientation[2];
+
+	int index = 6;
+
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			axes[index] = Cross(obb1.orientation[i], obb2.orientation[j]);
+			index++;
+		}
+	}
+
+	for (int i = 0; i < 15; i++) {
+		if (!TestSeparatingAxis(obb1, obb2, axes[i])) {
+			return false;
+		}
+	}
+
+	return true;
+}
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
@@ -891,12 +949,25 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	float cameraPhi = 0.0f;
 
 	//AABB aabb1{ { -0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f } };
-	OBB obb{
-		{ -1.0f, 0.0f, 0.0f },
-        {0.5f, 0.5f, 0.5f},{
-		{1.0f, 0.0f, 0.0f},
-		{0.0f, 1.0f, 0.0f},
-		{0.0f, 0.0f, 1.0f},} };
+	OBB obb1{
+	{ 0.0f, 0.0f, 0.0f },
+	{ 0.83f, 0.26f, 0.24f },
+	{
+		{ 1.0f, 0.0f, 0.0f },
+		{ 0.0f, 1.0f, 0.0f },
+		{ 0.0f, 0.0f, 1.0f },
+	}
+	};
+
+	OBB obb2{
+		{ 0.9f, 0.66f, 0.78f },
+		{ 0.5f, 0.37f, 0.51f },
+		{
+			{ 1.0f, 0.0f, 0.0f },
+			{ 0.0f, 1.0f, 0.0f },
+			{ 0.0f, 0.0f, 1.0f },
+		}
+	};
 	Sphere sphere{ { 0.0f, 1.0f, 0.0f }, 0.5f };
 
 	Segment segment{ { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.5f, -2.0f } };
@@ -923,7 +994,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	static Vector3 orbitStartCameraRotation;
 	static float orbitStartTheta = 0.0f;
 	static float orbitStartPhi = 0.0f;
-	static float orbitRadius = 10.0f;
+	static float orbitRadius = 0.0f;
 
 
 	// キー入力結果を受け取る箱
@@ -1092,9 +1163,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 
 		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, AABBxSCollision(aabb1, segment) ? RED : WHITE);
-		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, OBBxSCollision(obb, segment) ? RED : WHITE);
-		DrawOBB(obb, worldViewProjectionMatrix, viewportMatrix, OBBxSCollision(obb, segment) ? RED : WHITE);
-		//DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, OBBxBCollision(obb, sphere) ? RED : WHITE);
+		//DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, OBBxSCollision(obb, segment) ? RED : WHITE);
+		bool isHit = OBBCollision(obb1, obb2);
+
+		DrawOBB(obb1, worldViewProjectionMatrix, viewportMatrix, isHit ? RED : WHITE);
+		DrawOBB(obb2, worldViewProjectionMatrix, viewportMatrix, isHit ? RED : WHITE);//DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, OBBxBCollision(obb, sphere) ? RED : WHITE);
 	
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
@@ -1105,16 +1178,21 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("Camera Target", &cameraTarget.x, 0.01f);
 		/*ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);*/
-		ImGui::DragFloat3("OBB Center", &obb.center.x, 0.01f);
-		ImGui::DragFloat3("OBB Orientation 0", &obb.orientation[0].x, 0.01f);
-		ImGui::DragFloat3("OBB Orientation 1", &obb.orientation[1].x, 0.01f);
-		ImGui::DragFloat3("OBB Orientation 2", &obb.orientation[2].x, 0.01f);
-		ImGui::DragFloat3("OBB Half Size", &obb.halfSize.x, 0.01f);
+		ImGui::DragFloat3("OBB1 Center", &obb1.center.x, 0.01f);
+		ImGui::DragFloat3("OBB1 Half Size", &obb1.halfSize.x, 0.01f);
+		ImGui::DragFloat3("OBB1 Orientation 0", &obb1.orientation[0].x, 0.01f);
+		ImGui::DragFloat3("OBB1 Orientation 1", &obb1.orientation[1].x, 0.01f);
+		ImGui::DragFloat3("OBB1 Orientation 2", &obb1.orientation[2].x, 0.01f);
+
+		ImGui::DragFloat3("OBB2 Center", &obb2.center.x, 0.01f);
+		ImGui::DragFloat3("OBB2 Half Size", &obb2.halfSize.x, 0.01f);
+		ImGui::DragFloat3("OBB2 Orientation 0", &obb2.orientation[0].x, 0.01f);
+		ImGui::DragFloat3("OBB2 Orientation 1", &obb2.orientation[1].x, 0.01f);
+		ImGui::DragFloat3("OBB2 Orientation 2", &obb2.orientation[2].x, 0.01f);
 		/*ImGui::DragFloat3("Sphere Center", &sphere.center.x, 0.01f);
 		ImGui::DragFloat("Sphere Radius", &sphere.radius, 0.01f);*/
-		
-		ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
-		ImGui::DragFloat3("Segment Diff", &segment.diff.x, 0.01f);
+		/*ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
+		ImGui::DragFloat3("Segment Diff", &segment.diff.x, 0.01f);*/
 		/*ImGui::DragFloat3("Plane Center", &planeCenter.x, 0.01f);
 		ImGui::DragFloat("Plane Distance", &planeDistance, 0.01f);*/
 		//ImGui::InputFloat3("Project", &project.x,"%.3f",ImGuiInputTextFlags_ReadOnly);
