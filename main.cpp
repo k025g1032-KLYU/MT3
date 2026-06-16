@@ -883,13 +883,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		aabb1.max.y = (std::max)(aabb1.min.y, aabb1.max.y);
 		aabb1.max.z = (std::max)(aabb1.min.z, aabb1.max.z);
 
-		aabb2.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
-		aabb2.min.y = (std::min)(aabb1.min.y, aabb1.max.y);
-		aabb2.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
+		aabb2.min.x = (std::min)(aabb2.min.x, aabb2.max.x);
+		aabb2.min.y = (std::min)(aabb2.min.y, aabb2.max.y);
+		aabb2.min.z = (std::min)(aabb2.min.z, aabb2.max.z);
 
-		aabb2.max.x = (std::max)(aabb1.min.x, aabb1.max.x);
-		aabb2.max.y = (std::max)(aabb1.min.y, aabb1.max.y);
-		aabb2.max.z = (std::max)(aabb1.min.z, aabb1.max.z);
+		aabb2.max.x = (std::max)(aabb2.min.x, aabb2.max.x);
+		aabb2.max.y = (std::max)(aabb2.min.y, aabb2.max.y);
+		aabb2.max.z = (std::max)(aabb2.min.z, aabb2.max.z);
 
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f , float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
