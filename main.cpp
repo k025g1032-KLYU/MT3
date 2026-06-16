@@ -20,6 +20,11 @@ struct Vector3 {
 	float z;
 };
 
+struct AABB {
+	Vector3 min;
+	Vector3 max;
+};
+
 struct Sphere {
 	Vector3 center;
 	float radius;
@@ -595,6 +600,33 @@ void DrawSegment(const Segment& segment, const Matrix4x4& viewProjectionMatrix, 
 	Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
 }
 
+void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, int color)
+{
+	Vector3 vertices[8] = {
+		{aabb.min.x, aabb.min.y, aabb.min.z},
+		{aabb.max.x, aabb.min.y, aabb.min.z},
+		{aabb.max.x, aabb.max.y, aabb.min.z},
+		{aabb.min.x, aabb.max.y, aabb.min.z},
+		{aabb.min.x, aabb.min.y, aabb.max.z},
+		{aabb.max.x, aabb.min.y, aabb.max.z},
+		{aabb.max.x, aabb.max.y, aabb.max.z},
+		{aabb.min.x, aabb.max.y, aabb.max.z}
+	};
+	for (int i = 0; i < 8; i++) {
+		vertices[i] = Transform(Transform(vertices[i], viewProjectionMatrix), viewportMatrix);
+	}
+	int edges[12][2] = {
+		{0, 1}, {1, 2}, {2, 3}, {3, 0},
+		{4, 5}, {5, 6}, {6, 7}, {7, 4},
+		{0, 4}, {1, 5}, {2, 6}, {3, 7}
+	};
+	for (int i = 0; i < 12; i++) {
+		Vector3 start = vertices[edges[i][0]];
+		Vector3 end = vertices[edges[i][1]];
+		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
+	}
+}
+
 bool BxBCollision(const Sphere& sphere1, const Sphere& sphere2) {
 	float distanceSq = (sphere1.center.x - sphere2.center.x) * (sphere1.center.x - sphere2.center.x) +
 		(sphere1.center.y - sphere2.center.y) * (sphere1.center.y - sphere2.center.y) +
@@ -639,7 +671,7 @@ bool SxPCollision(const Segment& segment, const Plane& plane)
 	return 0.0f <= t && t <= 1.0f;
 }
 
-bool IsCollision(const Triangle& triangle, const Segment& segment)
+bool TxSCollision(const Triangle& triangle, const Segment& segment)
 {
 	//邊向量
 	Vector3 e01 = Subtract(triangle.vertics[1], triangle.vertics[0]);
@@ -680,10 +712,12 @@ bool IsCollision(const Triangle& triangle, const Segment& segment)
 
 }
 
-//bool IsCollision(const Triangle& triangle, const Segment& segment)
-//{
-//	
-//}
+bool AABBCollision(const AABB& aabb1, const AABB& aabb2)
+{
+	return (aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x) &&
+		(aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y) &&
+		(aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z);
+}
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
@@ -702,19 +736,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	float cameraHeight = 3.0f;
 	float cameraPhi = 0.0f;
 
-	/*Vector3 sphere1Center{ 0.0f, 1.0f, 0.0f };
-	float sphere1Radius = 0.1f;*/
-
-	//Vector3 planeCenter{ 0.0f, 0.0f, 1.0f };
-	//float planeDistance = 1.0f;
-
-	Triangle triangle{
-	{
-		{-0.5f,-0.1f,0.0f},
-		{ 0.5f,-0.1f,0.0f},
-		{ 0.0f,1.0f,0.0f}
-	}
-	};
+	AABB aabb1{ { -0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f } };
+	AABB aabb2{ { 0.2f, 0.2f, 0.2f }, { 1.0f, 1.0f, 1.0f } };
 
 	Segment segment{ { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.5f, -2.0f } };
 	Vector3 point{ -1.5f,0.6f,0.6f };
@@ -852,11 +875,27 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		
 		Matrix4x4 viewMatrix = Inverse(cameraMatrix);
 
+		aabb1.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
+		aabb1.min.y = (std::min)(aabb1.min.y, aabb1.max.y);
+		aabb1.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
+
+		aabb1.max.x = (std::max)(aabb1.min.x, aabb1.max.x);
+		aabb1.max.y = (std::max)(aabb1.min.y, aabb1.max.y);
+		aabb1.max.z = (std::max)(aabb1.min.z, aabb1.max.z);
+
+		aabb2.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
+		aabb2.min.y = (std::min)(aabb1.min.y, aabb1.max.y);
+		aabb2.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
+
+		aabb2.max.x = (std::max)(aabb1.min.x, aabb1.max.x);
+		aabb2.max.y = (std::max)(aabb1.min.y, aabb1.max.y);
+		aabb2.max.z = (std::max)(aabb1.min.z, aabb1.max.z);
+
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f , float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 		
-		IsCollision(triangle, segment);
+		AABBCollision(aabb1, aabb2);
 	
 		prevMousePos = mousePos;
 
@@ -868,20 +907,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		/// ↓描画処理ここから
 		///
 
-		//DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, BLUE);
-		//DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
-		//DrawSphere(closestPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
+	
+	/*	int segmentColor = WHITE;
 
-		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
-		int segmentColor = WHITE;
-
-		(IsCollision(triangle, segment)) ? segmentColor = RED : segmentColor = WHITE;
+		(IsCollision(triangle, segment)) ? segmentColor = RED : segmentColor = WHITE;*/
 
 		
 
-		DrawSphere({cameraTarget,0.01f}, worldViewProjectionMatrix, viewportMatrix, WHITE);
-		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, segmentColor);
-		DarwTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, GREEN);
+		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
+
+		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, AABBCollision(aabb1, aabb2) ? RED : WHITE);
+		DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, AABBCollision(aabb1, aabb2) ? RED : WHITE);
+	
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		
@@ -889,14 +926,16 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
 		ImGui::DragFloat3("Camera Target", &cameraTarget.x, 0.01f);
-		ImGui::DragFloat3("Triangle Vertex 0", &triangle.vertics[0].x, 0.01f);
-		ImGui::DragFloat3("Triangle Vertex 1", &triangle.vertics[1].x, 0.01f);
-		ImGui::DragFloat3("Triangle Vertex 2", &triangle.vertics[2].x, 0.01f);
-		ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
-		ImGui::DragFloat3("Segment Diff", &segment.diff.x, 0.01f);
+		ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
+		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);
+		ImGui::DragFloat3("AABB2.min", &aabb2.min.x, 0.01f);
+		ImGui::DragFloat3("AABB2.max", &aabb2.max.x, 0.01f);
+		
+		/*ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
+		ImGui::DragFloat3("Segment Diff", &segment.diff.x, 0.01f);*/
 		/*ImGui::DragFloat3("Plane Center", &planeCenter.x, 0.01f);
 		ImGui::DragFloat("Plane Distance", &planeDistance, 0.01f);*/
-		ImGui::InputFloat3("Project", &project.x,"%.3f",ImGuiInputTextFlags_ReadOnly);
+		//ImGui::InputFloat3("Project", &project.x,"%.3f",ImGuiInputTextFlags_ReadOnly);
 		ImGui::End();
 
 
