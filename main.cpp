@@ -912,12 +912,25 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	    { -1.0f, -1.0f, 0.0f },
 	    {  1.0f, -1.0f, 0.0f },  // 左下
 	};
+
 	
-	
+	Novice::GetMousePosition(&mousePos.x, &mousePos.y);
+	prevMousePos = mousePos;
+
+	static bool isOrbit = false;
+	static mousePosition orbitStartMouse;
+	static Vector3 orbitStartCameraPosition;
+	static Vector3 orbitStartCameraRotation;
+	static float orbitStartTheta = 0.0f;
+	static float orbitStartPhi = 0.0f;
+	static float orbitRadius = 10.0f;
+
+
 	// キー入力結果を受け取る箱
 	char keys[256] = {0};
 	char preKeys[256] = {0};
 
+	
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -927,17 +940,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		memcpy(preKeys, keys, 256);
 		Novice::GetHitKeyStateAll(keys);
 		
-		prevMousePos = mousePos;
-		Novice::GetMousePosition(&mousePos.x, &mousePos.y);
+		
 
 		///
 		/// ↓更新処理ここから
 		///
 		
 		Novice::GetMousePosition(&mousePos.x, &mousePos.y);
-
-		Novice::ScreenPrintf(0, 0, "Mouse Position: (%d, %d)", int(mousePos.x), int(mousePos.y));
-		Novice::ScreenPrintf(0, 20, "Previous Mouse Position: (%d, %d)", int(prevMousePos.x), int(prevMousePos.y));
 
 		
 		if (keys[DIK_RIGHT])
@@ -970,31 +979,47 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		
 		if (Novice::IsPressMouse(1))
 		{
-			cameraTheta += float(mousePos.x - prevMousePos.x) * 0.01f;
-			cameraPhi += float(mousePos.y - prevMousePos.y) * 0.01f;
+			if (!isOrbit)
+			{
+				isOrbit = true;
 
-			cameraPhi = std::clamp(cameraPhi, -1.4f, 1.4f);
+				orbitStartMouse = mousePos;
+				orbitStartCameraPosition = cameraPosition;
+				orbitStartCameraRotation = cameraRotation;
+
+				Vector3 offset = Subtract(cameraPosition, cameraTarget);
+
+				orbitRadius = Length(offset);
+
+				orbitStartTheta = atan2f(offset.x, -offset.z);
+				orbitStartPhi = asinf(offset.y / orbitRadius);
+			}
+
+			float deltaTheta = float(mousePos.x - orbitStartMouse.x) * 0.01f;
+			float deltaPhi = float(mousePos.y - orbitStartMouse.y) * 0.01f;
+
+			float theta = orbitStartTheta + deltaTheta;
+			float phi = std::clamp(orbitStartPhi + deltaPhi, -1.4f, 1.4f);
 
 			cameraPosition.x =
 				cameraTarget.x +
-				cameraRadius *
-				std::cos(cameraPhi) *
-				std::sin(cameraTheta);
+				orbitRadius * std::cos(phi) * std::sin(theta);
 
 			cameraPosition.y =
 				cameraTarget.y +
-				cameraRadius *
-				std::sin(cameraPhi);
+				orbitRadius * std::sin(phi);
 
 			cameraPosition.z =
 				cameraTarget.z -
-				cameraRadius *
-				std::cos(cameraPhi) *
-				std::cos(cameraTheta);
+				orbitRadius * std::cos(phi) * std::cos(theta);
 
-			cameraRotation.x = cameraPhi;
-			cameraRotation.y = -cameraTheta;
-			cameraRotation.z = 0.0f;
+			cameraRotation.x = orbitStartCameraRotation.x + (phi - orbitStartPhi);
+			cameraRotation.y = orbitStartCameraRotation.y - deltaTheta;
+			cameraRotation.z = orbitStartCameraRotation.z;
+		}
+		else
+		{
+			isOrbit = false;
 		}
 		
 
@@ -1047,7 +1072,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 		
-	
 		prevMousePos = mousePos;
 
 		///
@@ -1096,6 +1120,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		//ImGui::InputFloat3("Project", &project.x,"%.3f",ImGuiInputTextFlags_ReadOnly);
 		ImGui::End();
 
+
+
+		Novice::ScreenPrintf(0, 0, "Right Press to Turn");
+		Novice::ScreenPrintf(0, 20, "Mouse Position: (%d, %d)", int(mousePos.x), int(mousePos.y));
+
+		//Novice::ScreenPrintf(0, 20, "Previous Mouse Position: (%d, %d)", int(prevMousePos.x), int(prevMousePos.y));
 
 		///
 		/// ↑描画処理ここまで
