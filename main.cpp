@@ -100,6 +100,28 @@ Vector3 Normalize(const Vector3& v) {
 	return Multiply(v, 1.0f / length);
 }
 
+Vector3 Lerp(const Vector3& start, const Vector3& end, float t)
+{
+	Vector3 result;
+
+	result.x = start.x + (end.x - start.x) * t;
+	result.y = start.y + (end.y - start.y) * t;
+	result.z = start.z + (end.z - start.z) * t;
+
+	return result;
+}
+
+Vector3 Bezier(const Vector3& start, const Vector3& end, const Vector3& center, float t)
+{
+	Vector3 result;
+
+	Vector3 p0p1 = Lerp(start, center, t);
+	Vector3 p1p2 = Lerp(center, end, t);
+	result= Lerp(p0p1, p1p2, t);
+
+	return result;
+}
+
 static const int kColumnWidth = 60;
 static const int kRowHeight = 20;
 
@@ -657,6 +679,27 @@ void DrawOBB(const OBB& obb, const Matrix4x4& viewProjectionMatrix, const Matrix
 	}
 }
 
+
+void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint2, const Vector3& controlPoint1,
+	const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, int color)
+{
+	float t = 1.0f;
+	Vector3 drawPoint[51];
+	for (int i = 0; i < 51; i++)
+	{
+		t = (float)i / 50;
+		drawPoint[i]=Bezier(controlPoint0, controlPoint2, controlPoint1, t);
+		if (i > 0)
+		{
+			Vector3 start = Transform(Transform(drawPoint[i-1], viewProjectionMatrix), viewportMatrix);
+			Vector3 end = Transform(Transform(drawPoint[i], viewProjectionMatrix), viewportMatrix);
+			Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
+		}
+		
+	}
+	
+};
+
 bool BxBCollision(const Sphere& sphere1, const Sphere& sphere2) {
 	float distanceSq = (sphere1.center.x - sphere2.center.x) * (sphere1.center.x - sphere2.center.x) +
 		(sphere1.center.y - sphere2.center.y) * (sphere1.center.y - sphere2.center.y) +
@@ -984,6 +1027,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	    {  1.0f, -1.0f, 0.0f },  // 左下
 	};
 
+	Vector3 controlPointofBezier[3] = {
+		{-0.8f,0.58f,1.0f},
+		{1.76f,1.0f,-0.3f},
+		{0.94f,-0.7f,2.3f},
+	};
 	
 	Novice::GetMousePosition(&mousePos.x, &mousePos.y);
 	prevMousePos = mousePos;
@@ -1160,25 +1208,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		
 
-		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
-
-		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, AABBxSCollision(aabb1, segment) ? RED : WHITE);
-		//DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, OBBxSCollision(obb, segment) ? RED : WHITE);
-		bool isHit = OBBCollision(obb1, obb2);
-
-		DrawOBB(obb1, worldViewProjectionMatrix, viewportMatrix, isHit ? RED : WHITE);
-		DrawOBB(obb2, worldViewProjectionMatrix, viewportMatrix, isHit ? RED : WHITE);//DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, OBBxBCollision(obb, sphere) ? RED : WHITE);
-	
-
+		DrawBezier(controlPointofBezier[0], controlPointofBezier[2], controlPointofBezier[1], worldViewProjectionMatrix, viewportMatrix,BLACK);
+		DrawSphere({ controlPointofBezier[0], 0.01f }, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		DrawSphere({ controlPointofBezier[1], 0.01f }, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		DrawSphere({ controlPointofBezier[2], 0.01f }, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		
 		ImGui::Begin("Debug Window");
 		ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
 		ImGui::DragFloat3("Camera Target", &cameraTarget.x, 0.01f);
+		ImGui::DragFloat3("controlPointofBezier[0]", &controlPointofBezier[0].x, 0.01f);
+		ImGui::DragFloat3("controlPointofBezier[1]", &controlPointofBezier[1].x, 0.01f);
+		ImGui::DragFloat3("controlPointofBezier[2]", &controlPointofBezier[2].x, 0.01f);
 		/*ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);*/
-		ImGui::DragFloat3("OBB1 Center", &obb1.center.x, 0.01f);
+		/*ImGui::DragFloat3("OBB1 Center", &obb1.center.x, 0.01f);
 		ImGui::DragFloat3("OBB1 Half Size", &obb1.halfSize.x, 0.01f);
 		ImGui::DragFloat3("OBB1 Orientation 0", &obb1.orientation[0].x, 0.01f);
 		ImGui::DragFloat3("OBB1 Orientation 1", &obb1.orientation[1].x, 0.01f);
@@ -1188,7 +1233,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("OBB2 Half Size", &obb2.halfSize.x, 0.01f);
 		ImGui::DragFloat3("OBB2 Orientation 0", &obb2.orientation[0].x, 0.01f);
 		ImGui::DragFloat3("OBB2 Orientation 1", &obb2.orientation[1].x, 0.01f);
-		ImGui::DragFloat3("OBB2 Orientation 2", &obb2.orientation[2].x, 0.01f);
+		ImGui::DragFloat3("OBB2 Orientation 2", &obb2.orientation[2].x, 0.01f);*/
 		/*ImGui::DragFloat3("Sphere Center", &sphere.center.x, 0.01f);
 		ImGui::DragFloat("Sphere Radius", &sphere.radius, 0.01f);*/
 		/*ImGui::DragFloat3("Segment Center", &segment.origin.x, 0.01f);
