@@ -1212,6 +1212,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		DrawSphere({ controlPointofBezier[0], 0.01f }, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		DrawSphere({ controlPointofBezier[1], 0.01f }, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		DrawSphere({ controlPointofBezier[2], 0.01f }, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		//DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		
 		ImGui::Begin("Debug Window");
