@@ -700,6 +700,14 @@ void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint2, cons
 	
 };
 
+void DrawLine3D(const Vector3& startPoint, const Vector3& endPoint,
+	const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, int color)
+{
+	Vector3 start = Transform(Transform(startPoint, viewProjectionMatrix), viewportMatrix);
+	Vector3 end = Transform(Transform(endPoint, viewProjectionMatrix), viewportMatrix);
+	Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
+};
+
 bool BxBCollision(const Sphere& sphere1, const Sphere& sphere2) {
 	float distanceSq = (sphere1.center.x - sphere2.center.x) * (sphere1.center.x - sphere2.center.x) +
 		(sphere1.center.y - sphere2.center.y) * (sphere1.center.y - sphere2.center.y) +
@@ -974,6 +982,16 @@ bool OBBCollision(const OBB& obb1, const OBB& obb2)
 	return true;
 }
 
+Vector3 GetTranslation(const Matrix4x4& matrix)
+{
+	return {
+		matrix.m[3][0],
+		matrix.m[3][1],
+		matrix.m[3][2]
+	};
+}
+
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
@@ -1031,6 +1049,28 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		{-0.8f,0.58f,1.0f},
 		{1.76f,1.0f,-0.3f},
 		{0.94f,-0.7f,2.3f},
+	};
+
+	//Hierarchy
+	Vector3 translates[3] =
+	{
+		{0.2f,1.0f,0.0f},
+		{0.4f,0.0f,0.0f},
+		{0.3f,0.0f,0.0f},
+	};
+
+	Vector3 rotates[3] =
+	{
+		{0.0f,0.0f,-6.8f},
+		{0.0f,0.0f,-1.4f},
+		{0.0f,0.0f,0.0f},
+	};
+
+	Vector3 scales[3] =
+	{
+		{1.0f,1.0f,1.0f},
+		{1.0f,1.0f,1.0f},
+		{1.0f,1.0f,1.0f},
 	};
 	
 	Novice::GetMousePosition(&mousePos.x, &mousePos.y);
@@ -1173,22 +1213,29 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			cameraPhi = 0.0f;
 		}
 		
-		
+		Matrix4x4 worldMatrixofRed = MakeAffineMatrix(scales[0], rotates[0], translates[0]);
+		Matrix4x4 worldMatrixofGreen = Multiply(MakeAffineMatrix(scales[1], rotates[1], translates[1]), worldMatrixofRed) ;
+		Matrix4x4 worldMatrixofBlue = Multiply(MakeAffineMatrix(scales[2], rotates[2], translates[2]), worldMatrixofGreen);
+		Vector3 NworldMatrixofRed = GetTranslation(worldMatrixofRed);
+		Vector3 NworldMatrixofGreen = GetTranslation(worldMatrixofGreen);
+		Vector3 NworldMatrixofBlue = GetTranslation(worldMatrixofBlue);
+
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, rotate, translate);
 		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, cameraRotation, cameraPosition);
 		
 		Matrix4x4 viewMatrix = Inverse(cameraMatrix);
 
-		/*aabb1.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
-		aabb1.min.y = (std::min)(aabb1.min.y, aabb1.max.y);
-		aabb1.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
-
-		aabb1.max.x = (std::max)(aabb1.min.x, aabb1.max.x);
-		aabb1.max.y = (std::max)(aabb1.min.y, aabb1.max.y);
-		aabb1.max.z = (std::max)(aabb1.min.z, aabb1.max.z);*/
-
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f , float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+
+		Matrix4x4 worldViewProjectionMatrixRed = Multiply(worldMatrixofRed, Multiply(viewMatrix, projectionMatrix));
+		Matrix4x4 worldViewProjectionMatrixGreen = Multiply(worldMatrixofGreen, Multiply(viewMatrix, projectionMatrix));
+		Matrix4x4 worldViewProjectionMatrixBlue = Multiply(worldMatrixofBlue, Multiply(viewMatrix, projectionMatrix));
+		Vector3 redPos = GetTranslation(worldMatrixofRed);
+		Vector3 greenPos = GetTranslation(worldMatrixofGreen);
+		Vector3 bluePos = GetTranslation(worldMatrixofBlue);
+
+
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 		
 		prevMousePos = mousePos;
@@ -1208,10 +1255,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		
 
-		DrawBezier(controlPointofBezier[0], controlPointofBezier[2], controlPointofBezier[1], worldViewProjectionMatrix, viewportMatrix,BLACK);
-		DrawSphere({ controlPointofBezier[0], 0.01f }, worldViewProjectionMatrix, viewportMatrix, BLACK);
-		DrawSphere({ controlPointofBezier[1], 0.01f }, worldViewProjectionMatrix, viewportMatrix, BLACK);
-		DrawSphere({ controlPointofBezier[2], 0.01f }, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		//DrawBezier(controlPointofBezier[0], controlPointofBezier[2], controlPointofBezier[1], worldViewProjectionMatrix, viewportMatrix,BLACK);
+		DrawSphere({ {0.0f, 0.0f, 0.0f}, 0.1f }, worldViewProjectionMatrixRed, viewportMatrix, RED);
+		DrawSphere({ {0.0f, 0.0f, 0.0f}, 0.1f }, worldViewProjectionMatrixGreen, viewportMatrix, GREEN);
+		DrawSphere({ {0.0f, 0.0f, 0.0f}, 0.1f }, worldViewProjectionMatrixBlue, viewportMatrix, BLUE);
+		DrawLine3D(NworldMatrixofRed, NworldMatrixofGreen, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		DrawLine3D(NworldMatrixofGreen, NworldMatrixofBlue, worldViewProjectionMatrix, viewportMatrix, WHITE);
+
+
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		
@@ -1219,9 +1270,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
 		ImGui::DragFloat3("Camera Target", &cameraTarget.x, 0.01f);
-		ImGui::DragFloat3("controlPointofBezier[0]", &controlPointofBezier[0].x, 0.01f);
-		ImGui::DragFloat3("controlPointofBezier[1]", &controlPointofBezier[1].x, 0.01f);
-		ImGui::DragFloat3("controlPointofBezier[2]", &controlPointofBezier[2].x, 0.01f);
+		ImGui::DragFloat3("translatess[0]", &translates[0].x, 0.01f);
+		ImGui::DragFloat3("rotates[0]", &rotates[0].x, 0.01f);
+		ImGui::DragFloat3("scales[0]", &scales[0].x, 0.01f);
+		ImGui::DragFloat3("translatess[1]", &translates[1].x, 0.01f);
+		ImGui::DragFloat3("rotates[1]", &rotates[1].x, 0.01f);
+		ImGui::DragFloat3("scales[1]", &scales[1].x, 0.01f);
+		ImGui::DragFloat3("translatess[2]", &translates[2].x, 0.01f);
+		ImGui::DragFloat3("rotates[2]", &rotates[2].x, 0.01f);
+		ImGui::DragFloat3("scales[2]", &scales[2].x, 0.01f);
 		/*ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);*/
 		/*ImGui::DragFloat3("OBB1 Center", &obb1.center.x, 0.01f);
