@@ -20,6 +20,10 @@ struct Vector3 {
 	float z;
 };
 
+struct Matrix4x4 {
+	float m[4][4];
+};
+
 struct AABB {
 	Vector3 min;
 	Vector3 max;
@@ -132,9 +136,7 @@ void PrintVector3(int x, int y, const Vector3& v, const char* label) {
 	Novice::ScreenPrintf(x+ kColumnWidth*3, y, "%s",label);
 }
 
-struct Matrix4x4 {
-	float m[4][4];
-};
+
 
 Matrix4x4 Add(const Matrix4x4& v1, const Matrix4x4& v2) {
 	Matrix4x4 result{};
@@ -991,14 +993,52 @@ Vector3 GetTranslation(const Matrix4x4& matrix)
 	};
 }
 
+//二項演算子
+Vector3 operator+ (const Vector3& v1, const Vector3& v2) { return Add(v1, v2); }
+Vector3 operator- (const Vector3& v1, const Vector3& v2) { return Subtract(v1, v2); }
+Vector3 operator* (float s, const Vector3& v) { return Multiply(v,s); }
+Vector3 operator* (const Vector3& v, float s) { return s*v; }
+Vector3 operator/ (const Vector3& v, float s) { return Multiply(v, 1.0f/s); }
+Matrix4x4 operator+(const Matrix4x4& m1, const Matrix4x4& m2) { return Add(m1, m2); }
+Matrix4x4 operator-(const Matrix4x4& m1, const Matrix4x4& m2) { return Subtract(m1, m2); }
+Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) { return Multiply(m1, m2); }
 
+//單項演算子
+Vector3 operator-(const Vector3& v) { return { -v.x,-v.y,-v.z }; }
+Vector3 operator+(const Vector3& v) { return v; }
+
+//複合代入演算子
+Vector3& operator+=(Vector3& v1, Vector3& v2) {
+	v1.x += v2.x;
+	v1.y += v2.x;
+	v1.z += v2.x;
+	return v1;
+}
+Vector3& operator-=(Vector3& v1, Vector3& v2) {
+	v1.x -= v2.x;
+	v1.y -= v2.x;
+	v1.z -= v2.x;
+	return v1;
+}
+Vector3& operator*=(Vector3& v, float s) {
+	v.x *= s;
+	v.y *= s;
+	v.z *= s;
+	return v;
+}
+Vector3& operator/=(Vector3& v, float s) {
+	v.x /= s;
+	v.y /= s;
+	v.z /= s;
+	return v;
+}
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// ライブラリの初期化
 	Novice::Initialize(kWindowTitle, 1280, 720);
 
-	Vector3 rotate{ 0.0f,0.0f,0.0f };
+	//Vector3 rotate{ 0.0f,0.0f,0.0f };
 	Vector3 translate{ 0.0f, 0.0f, 0.0f };
 	Vector3 cameraPosition{ 0.0f, 1.0f, -10.0f };
 	Vector3 cameraRotation{ 0.0f, 0.0f, 0.0f };
@@ -1083,6 +1123,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	static float orbitStartTheta = 0.0f;
 	static float orbitStartPhi = 0.0f;
 	static float orbitRadius = 0.0f;
+
+
+	Vector3 a{ 0.2f,1.0f,0.0f };
+	Vector3 b{ 2.4f,3.1f,1.2f };
+	Vector3 c = a + b;
+	Vector3 d = a - b;
+	Vector3 e = a *2.4f;
+	Vector3 rotate={ 0.4f,1.34f,-0.8f };
+	Matrix4x4 rotateXMatrix = MakeRotationXMatrix(rotate.x);
+	Matrix4x4 rotateYMatrix = MakeRotationYMatrix(rotate.y);
+	Matrix4x4 rotateZMatrix = MakeRotationZMatrix(rotate.z);
+	Matrix4x4 rotateMatrix = rotateXMatrix * rotateYMatrix * rotateZMatrix;
 
 
 	// キー入力結果を受け取る箱
@@ -1256,18 +1308,32 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		
 
 		//DrawBezier(controlPointofBezier[0], controlPointofBezier[2], controlPointofBezier[1], worldViewProjectionMatrix, viewportMatrix,BLACK);
-		DrawSphere({ {0.0f, 0.0f, 0.0f}, 0.1f }, worldViewProjectionMatrixRed, viewportMatrix, RED);
-		DrawSphere({ {0.0f, 0.0f, 0.0f}, 0.1f }, worldViewProjectionMatrixGreen, viewportMatrix, GREEN);
-		DrawSphere({ {0.0f, 0.0f, 0.0f}, 0.1f }, worldViewProjectionMatrixBlue, viewportMatrix, BLUE);
-		DrawLine3D(NworldMatrixofRed, NworldMatrixofGreen, worldViewProjectionMatrix, viewportMatrix, WHITE);
-		DrawLine3D(NworldMatrixofGreen, NworldMatrixofBlue, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		//DrawSphere({ {0.0f, 0.0f, 0.0f}, 0.1f }, worldViewProjectionMatrixRed, viewportMatrix, RED);
+		//DrawSphere({ {0.0f, 0.0f, 0.0f}, 0.1f }, worldViewProjectionMatrixGreen, viewportMatrix, GREEN);
+		//DrawSphere({ {0.0f, 0.0f, 0.0f}, 0.1f }, worldViewProjectionMatrixBlue, viewportMatrix, BLUE);
+		//DrawLine3D(NworldMatrixofRed, NworldMatrixofGreen, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		//DrawLine3D(NworldMatrixofGreen, NworldMatrixofBlue, worldViewProjectionMatrix, viewportMatrix, WHITE);
 
 
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		
-		ImGui::Begin("Debug Window");
-		ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
+		ImGui::Begin("Window");
+		ImGui::Text("c:%f,%f,%f", c.x, c.y, c.z);
+		ImGui::Text("d:%f,%f,%f", d.x, d.y, d.z);
+		ImGui::Text("c:%f,%f,%f", e.x, e.y, e.z);
+		ImGui::Text("matrix:\n%f,%f,%f,%f\n%f,%f,%f,%f\n%f,%f,%f,%f\n%f,%f,%f,%f\n",
+			rotateMatrix.m[0][0], rotateMatrix.m[0][1], rotateMatrix.m[0][2],
+			rotateMatrix.m[0][3], rotateMatrix.m[1][0], rotateMatrix.m[1][1],
+			rotateMatrix.m[1][2], rotateMatrix.m[1][3], rotateMatrix.m[2][0],
+			rotateMatrix.m[2][1], rotateMatrix.m[2][2], rotateMatrix.m[2][3],
+			rotateMatrix.m[3][0], rotateMatrix.m[3][1], rotateMatrix.m[3][2],
+			rotateMatrix.m[3][3]
+		);
+		
+
+
+		/*ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
 		ImGui::DragFloat3("Camera Target", &cameraTarget.x, 0.01f);
 		ImGui::DragFloat3("translatess[0]", &translates[0].x, 0.01f);
@@ -1278,7 +1344,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("scales[1]", &scales[1].x, 0.01f);
 		ImGui::DragFloat3("translatess[2]", &translates[2].x, 0.01f);
 		ImGui::DragFloat3("rotates[2]", &rotates[2].x, 0.01f);
-		ImGui::DragFloat3("scales[2]", &scales[2].x, 0.01f);
+		ImGui::DragFloat3("scales[2]", &scales[2].x, 0.01f);*/
 		/*ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);*/
 		/*ImGui::DragFloat3("OBB1 Center", &obb1.center.x, 0.01f);
