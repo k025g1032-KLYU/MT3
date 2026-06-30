@@ -64,6 +64,21 @@ struct Triangle {
 	Vector3 vertices[3];
 };
 
+struct Spring {
+	Vector3 anchor;
+	float naturalLength;
+	float stiffness;
+};
+
+struct Ball{
+	Vector3 position;
+	Vector3 velocity;
+	Vector3 acceleration;
+	float mass;
+	float radius;
+	unsigned int color;
+};
+
 Vector3 Add(const Vector3& v1, const Vector3& v2) {
 	Vector3 result{};
 	result.x = v1.x + v2.x;
@@ -1008,10 +1023,10 @@ Vector3 operator-(const Vector3& v) { return { -v.x,-v.y,-v.z }; }
 Vector3 operator+(const Vector3& v) { return v; }
 
 //複合代入演算子
-Vector3& operator+=(Vector3& v1, Vector3& v2) {
+Vector3& operator+=(Vector3& v1, const Vector3& v2) {
 	v1.x += v2.x;
-	v1.y += v2.x;
-	v1.z += v2.x;
+	v1.y += v2.y;
+	v1.z += v2.z;
 	return v1;
 }
 Vector3& operator-=(Vector3& v1, Vector3& v2) {
@@ -1038,7 +1053,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// ライブラリの初期化
 	Novice::Initialize(kWindowTitle, 1280, 720);
 
-	//Vector3 rotate{ 0.0f,0.0f,0.0f };
+	Vector3 rotate{ 0.0f,0.0f,0.0f };
 	Vector3 translate{ 0.0f, 0.0f, 0.0f };
 	Vector3 cameraPosition{ 0.0f, 1.0f, -10.0f };
 	Vector3 cameraRotation{ 0.0f, 0.0f, 0.0f };
@@ -1125,16 +1140,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	static float orbitRadius = 0.0f;
 
 
-	Vector3 a{ 0.2f,1.0f,0.0f };
-	Vector3 b{ 2.4f,3.1f,1.2f };
-	Vector3 c = a + b;
-	Vector3 d = a - b;
-	Vector3 e = a *2.4f;
-	Vector3 rotate={ 0.4f,1.43f,-0.8f };
-	Matrix4x4 rotateXMatrix = MakeRotationXMatrix(rotate.x);
-	Matrix4x4 rotateYMatrix = MakeRotationYMatrix(rotate.y);
-	Matrix4x4 rotateZMatrix = MakeRotationZMatrix(rotate.z);
-	Matrix4x4 rotateMatrix = rotateXMatrix * rotateYMatrix * rotateZMatrix;
+	Spring spring{};
+	spring.anchor = { 0.0f,0.0f,0.0f };
+	spring.naturalLength = 1.0f;
+	spring.stiffness = 100.0f;
+
+	Ball ball{};
+	ball.position={ 1.2f, 0.0f, 0.0f };
+	ball.mass = 2.0f;
+	ball.radius = 0.05f;
+	ball.color = BLUE;
+
+
 
 
 	// キー入力結果を受け取る箱
@@ -1265,6 +1282,25 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			cameraPhi = 0.0f;
 		}
 		
+
+		float deltaTime = 1.0f / 60.0f;
+		Vector3 diff = ball.position - spring.anchor;
+		float length = Length(diff);
+		if (length != 0.0f)
+		{
+			Vector3 direction = Normalize(diff);
+			Vector3 restPosition = spring.anchor + direction * spring.naturalLength;
+			Vector3 displacement = length * (ball.position - restPosition);
+			Vector3 restoringForce = -spring.stiffness * displacement;
+			Vector3 force = restoringForce;
+			ball.acceleration = force / ball.mass;
+
+		}
+		ball.velocity += ball.acceleration * deltaTime;
+		ball.position += ball.velocity * deltaTime;
+
+
+
 		Matrix4x4 worldMatrixofRed = MakeAffineMatrix(scales[0], rotates[0], translates[0]);
 		Matrix4x4 worldMatrixofGreen = Multiply(MakeAffineMatrix(scales[1], rotates[1], translates[1]), worldMatrixofRed) ;
 		Matrix4x4 worldMatrixofBlue = Multiply(MakeAffineMatrix(scales[2], rotates[2], translates[2]), worldMatrixofGreen);
@@ -1314,26 +1350,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		//DrawLine3D(NworldMatrixofRed, NworldMatrixofGreen, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		//DrawLine3D(NworldMatrixofGreen, NworldMatrixofBlue, worldViewProjectionMatrix, viewportMatrix, WHITE);
 
-
+		DrawSphere({ ball.position, 0.1f }, worldViewProjectionMatrix, viewportMatrix, BLUE);
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		
-		ImGui::Begin("Window");
-		ImGui::Text("c:%f,%f,%f", c.x, c.y, c.z);
-		ImGui::Text("d:%f,%f,%f", d.x, d.y, d.z);
-		ImGui::Text("c:%f,%f,%f", e.x, e.y, e.z);
-		ImGui::Text("matrix:\n%f,%f,%f,%f\n%f,%f,%f,%f\n%f,%f,%f,%f\n%f,%f,%f,%f\n",
-			rotateMatrix.m[0][0], rotateMatrix.m[0][1], rotateMatrix.m[0][2],
-			rotateMatrix.m[0][3], rotateMatrix.m[1][0], rotateMatrix.m[1][1],
-			rotateMatrix.m[1][2], rotateMatrix.m[1][3], rotateMatrix.m[2][0],
-			rotateMatrix.m[2][1], rotateMatrix.m[2][2], rotateMatrix.m[2][3],
-			rotateMatrix.m[3][0], rotateMatrix.m[3][1], rotateMatrix.m[3][2],
-			rotateMatrix.m[3][3]
-		);
-		
 
-
-		/*ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
+		ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
 		ImGui::DragFloat3("Camera Target", &cameraTarget.x, 0.01f);
 		ImGui::DragFloat3("translatess[0]", &translates[0].x, 0.01f);
@@ -1344,7 +1366,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("scales[1]", &scales[1].x, 0.01f);
 		ImGui::DragFloat3("translatess[2]", &translates[2].x, 0.01f);
 		ImGui::DragFloat3("rotates[2]", &rotates[2].x, 0.01f);
-		ImGui::DragFloat3("scales[2]", &scales[2].x, 0.01f);*/
+		ImGui::DragFloat3("scales[2]", &scales[2].x, 0.01f);
 		/*ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);*/
 		/*ImGui::DragFloat3("OBB1 Center", &obb1.center.x, 0.01f);
