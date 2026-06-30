@@ -1130,7 +1130,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Vector3 c = a + b;
 	Vector3 d = a - b;
 	Vector3 e = a *2.4f;
-	Vector3 rotate={ 0.4f,1.34f,-0.8f };
+	Vector3 rotate={ 0.4f,1.43f,-0.8f };
 	Matrix4x4 rotateXMatrix = MakeRotationXMatrix(rotate.x);
 	Matrix4x4 rotateYMatrix = MakeRotationYMatrix(rotate.y);
 	Matrix4x4 rotateZMatrix = MakeRotationZMatrix(rotate.z);
