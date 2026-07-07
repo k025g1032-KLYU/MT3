@@ -87,6 +87,14 @@ struct Pendulum {
 	float angularVelocity;
 	float angularAcceleration;
 };
+
+struct ConicalPendulum {
+	Vector3 anchor;
+	float length;
+	float halfApexAngle;
+	float angle;
+	float angularVelocity;
+};
 #pragma endregion
 
 #pragma region Functions
@@ -1230,6 +1238,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	pendulum.angularVelocity = 0.0f;
 	pendulum.angularAcceleration = 0.0f;
 
+	ConicalPendulum conicalPendulum;
+	conicalPendulum.anchor = { 0.0f, 1.0f, 0.0f };
+	conicalPendulum.length = 0.8f;
+	conicalPendulum.halfApexAngle = 0.7f;
+	conicalPendulum.angle = 0.0f;
+	conicalPendulum.angularVelocity = 0.0f;
+
 	//float angularVelocity = 3.14f;
 	//float angle = 0.0f;
 	Vector3 centerPoint= { 0.0f,0.0f,0.0f };
@@ -1255,7 +1270,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		///
 		/// ↓更新処理ここから
 		///
-		
+#pragma region Defalt Update
 		Novice::GetMousePosition(&mousePos.x, &mousePos.y);
 
 		
@@ -1364,15 +1379,24 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			cameraPhi = 0.0f;
 		}
 		
+#pragma endregion
+
 
 		Vector3 p= Pendulumlation(pendulum, 0);;
 		//float r = 0.8f;
 		float deltaTime = 1.0f / 60.0f;
 		if(start)
 		{
-			p = Pendulumlation(pendulum, deltaTime);
+			conicalPendulum.angularVelocity = std::sqrt(9.8f / (conicalPendulum.length) * std::cos(conicalPendulum.length * std::cos(conicalPendulum.halfApexAngle)));
+			conicalPendulum.angle += conicalPendulum.angularVelocity * deltaTime;
+
 		}
 
+		float radius =std::sin(conicalPendulum.halfApexAngle)*conicalPendulum.length;
+		float height = std::cos(conicalPendulum.halfApexAngle) * conicalPendulum.length;
+		ball.position.x = conicalPendulum.anchor.x + radius * std::cos(conicalPendulum.angle);
+		ball.position.y = conicalPendulum.anchor.y - height;
+		ball.position.z = conicalPendulum.anchor.z + radius * std::sin(conicalPendulum.angle);
 
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, rotate, translate);
 		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, cameraRotation, cameraPosition);
@@ -1408,8 +1432,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		//DrawLine3D(NworldMatrixofRed, NworldMatrixofGreen, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		//DrawLine3D(NworldMatrixofGreen, NworldMatrixofBlue, worldViewProjectionMatrix, viewportMatrix, WHITE);
 
-		DrawLine3D(pendulum.anchor, p, worldViewProjectionMatrix, viewportMatrix, WHITE);
-		DrawSphere({ p, 0.1f }, worldViewProjectionMatrix, viewportMatrix, BLUE);
+		DrawLine3D(conicalPendulum.anchor, ball.position, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		DrawSphere({ ball.position, 0.1f }, worldViewProjectionMatrix, viewportMatrix, BLUE);
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 
