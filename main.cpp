@@ -79,6 +79,14 @@ struct Ball{
 	unsigned int color;
 };
 
+struct Pendulum {
+	Vector3 anchor;
+	float length;
+	float angle;
+	float angularVelocity;
+	float angularAcceleration;
+};
+
 Vector3 Add(const Vector3& v1, const Vector3& v2) {
 	Vector3 result{};
 	result.x = v1.x + v2.x;
@@ -1008,6 +1016,32 @@ Vector3 GetTranslation(const Matrix4x4& matrix)
 	};
 }
 
+Vector3 Circulation(const Vector3& centerPoint, float angle, float distance)
+{
+	Vector3 result;
+
+	result.x = centerPoint.x + std::cosf(angle) * distance;
+	result.y = centerPoint.y + std::sinf(angle) * distance;
+	result.z = centerPoint.z ;
+
+	return result;
+}
+
+Vector3 Pendulumlation( Pendulum& pendulum, float deltaTime)
+{
+	Vector3 result;
+
+	pendulum.angularAcceleration = -9.8f / pendulum.length * std::sinf(pendulum.angle);
+	pendulum.angularVelocity = pendulum.angularVelocity + pendulum.angularAcceleration * deltaTime;
+	pendulum.angle = pendulum.angle + pendulum.angularVelocity * deltaTime;
+
+	result.x = pendulum.anchor.x + pendulum.length * std::sinf(pendulum.angle);
+	result.y = pendulum.anchor.y - pendulum.length * std::cosf(pendulum.angle);
+	result.z = pendulum.anchor.z;
+
+	return result;
+}
+
 //二項演算子
 Vector3 operator+ (const Vector3& v1, const Vector3& v2) { return Add(v1, v2); }
 Vector3 operator- (const Vector3& v1, const Vector3& v2) { return Subtract(v1, v2); }
@@ -1151,9 +1185,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ball.radius = 0.05f;
 	ball.color = BLUE;
 
+	Pendulum pendulum;
+	pendulum.anchor = { 0.0f, 1.0f, 0.0f };
+	pendulum.length = 0.8f;
+	pendulum.angle = 0.7f;
+	pendulum.angularVelocity = 0.0f;
+	pendulum.angularAcceleration = 0.0f;
 
-	float angularVelocity = 3.14f;
-	float angle = 0.0f;
+	//float angularVelocity = 3.14f;
+	//float angle = 0.0f;
 	Vector3 centerPoint= { 0.0f,0.0f,0.0f };
 
 
@@ -1287,32 +1327,26 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		}
 		
 
-		/*float deltaTime = 1.0f / 60.0f;
-		Vector3 diff = ball.position - spring.anchor;
-		float length = Length(diff);
-		if (length != 0.0f)
-		{
-			Vector3 direction = Normalize(diff);
-			Vector3 restPosition = spring.anchor + direction * spring.naturalLength;
-			Vector3 displacement = length * (ball.position - restPosition);
-			Vector3 restoringForce = -spring.stiffness * displacement;
-			Vector3 force = restoringForce;
-			ball.acceleration = force / ball.mass;
-
-		}
-		ball.velocity += ball.acceleration * deltaTime;
-		ball.position += ball.velocity * deltaTime;*/
-
-		Vector3 p= { 0.8f, 0.0f, 0.0f };
-		float r = 0.8f;
+		Vector3 p= Pendulumlation(pendulum, 0);;
+		//float r = 0.8f;
 		float deltaTime = 1.0f / 60.0f;
 		if(start)
 		{
-			angle += angularVelocity * deltaTime;
+			p = Pendulumlation(pendulum, deltaTime);
 		}
-		p.x = centerPoint.x + std::cosf(angle) * r;
-		p.y = centerPoint.y + std::sinf(angle) * r;
-		p.z = centerPoint.z;
+		
+
+		/*pendulum.angularAcceleration = -9.8f / pendulum.length * std::sinf(pendulum.angle);
+		pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime;
+		pendulum.angle += pendulum.angularVelocity * deltaTime;
+
+		p.x = pendulum.anchor.x + pendulum.length * std::sinf(pendulum.angle);
+		p.y = pendulum.anchor.y - pendulum.length * std::cosf(pendulum.angle);
+		p.z = pendulum.anchor.z;*/
+
+		
+
+
 
 
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, rotate, translate);
@@ -1349,6 +1383,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		//DrawLine3D(NworldMatrixofRed, NworldMatrixofGreen, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		//DrawLine3D(NworldMatrixofGreen, NworldMatrixofBlue, worldViewProjectionMatrix, viewportMatrix, WHITE);
 
+		DrawLine3D(pendulum.anchor, p, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawSphere({ p, 0.1f }, worldViewProjectionMatrix, viewportMatrix, BLUE);
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
