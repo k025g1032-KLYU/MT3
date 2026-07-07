@@ -1096,6 +1096,39 @@ Vector3 Pendulumlation( Pendulum& pendulum, float deltaTime)
 	return result;
 }
 
+Vector3 ConicalPendulumSimulation(ConicalPendulum& conicalPendulum,float deltaTime)
+{
+	constexpr float kGravity = 9.8f;
+
+	float cosTheta = std::cos(conicalPendulum.halfApexAngle);
+
+	if (std::abs(cosTheta) > 0.0001f)
+	{
+		conicalPendulum.angularVelocity =
+			std::sqrt(
+				kGravity /
+				(conicalPendulum.length * cosTheta));
+	}
+
+	conicalPendulum.angle +=
+		conicalPendulum.angularVelocity * deltaTime;
+
+	float radius =
+		std::sin(conicalPendulum.halfApexAngle) *
+		conicalPendulum.length;
+
+	float height =
+		std::cos(conicalPendulum.halfApexAngle) *
+		conicalPendulum.length;
+
+	return
+	{
+		conicalPendulum.anchor.x + radius * std::cos(conicalPendulum.angle),
+		conicalPendulum.anchor.y - height,
+		conicalPendulum.anchor.z + radius * std::sin(conicalPendulum.angle)
+	};
+}
+
 void SpringSimulation(const Spring& spring, Ball& ball, float deltaTime)
 {
 	Vector3 diff = ball.position - spring.anchor;
@@ -1255,7 +1288,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	char preKeys[256] = {0};
 
 	bool start = false;
-	
+	ball.position = ConicalPendulumSimulation(conicalPendulum, 0);
+
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -1382,21 +1416,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 #pragma endregion
 
 
-		Vector3 p= Pendulumlation(pendulum, 0);;
-		//float r = 0.8f;
 		float deltaTime = 1.0f / 60.0f;
 		if(start)
 		{
-			conicalPendulum.angularVelocity = std::sqrt(9.8f / (conicalPendulum.length) * std::cos(conicalPendulum.length * std::cos(conicalPendulum.halfApexAngle)));
-			conicalPendulum.angle += conicalPendulum.angularVelocity * deltaTime;
-
+			ball.position = ConicalPendulumSimulation(conicalPendulum, deltaTime);
 		}
 
-		float radius =std::sin(conicalPendulum.halfApexAngle)*conicalPendulum.length;
-		float height = std::cos(conicalPendulum.halfApexAngle) * conicalPendulum.length;
-		ball.position.x = conicalPendulum.anchor.x + radius * std::cos(conicalPendulum.angle);
-		ball.position.y = conicalPendulum.anchor.y - height;
-		ball.position.z = conicalPendulum.anchor.z + radius * std::sin(conicalPendulum.angle);
 
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, rotate, translate);
 		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, cameraRotation, cameraPosition);
