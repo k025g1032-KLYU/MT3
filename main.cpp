@@ -1082,15 +1082,6 @@ Vector3 Pendulumlation( Pendulum& pendulum, float deltaTime)
 	return result;
 }
 
-//二項演算子
-Vector3 operator+ (const Vector3& v1, const Vector3& v2) { return Add(v1, v2); }
-Vector3 operator- (const Vector3& v1, const Vector3& v2) { return Subtract(v1, v2); }
-Vector3 operator* (float s, const Vector3& v) { return Multiply(v,s); }
-Vector3 operator* (const Vector3& v, float s) { return s*v; }
-Vector3 operator/ (const Vector3& v, float s) { return Multiply(v, 1.0f/s); }
-Matrix4x4 operator+(const Matrix4x4& m1, const Matrix4x4& m2) { return Add(m1, m2); }
-Matrix4x4 operator-(const Matrix4x4& m1, const Matrix4x4& m2) { return Subtract(m1, m2); }
-Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) { return Multiply(m1, m2); }
 void SpringSimulation(const Spring& spring, Ball& ball, float deltaTime)
 {
 	Vector3 diff = ball.position - spring.anchor;
@@ -1374,20 +1365,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		{
 			p = Pendulumlation(pendulum, deltaTime);
 		}
-		
-
-		/*pendulum.angularAcceleration = -9.8f / pendulum.length * std::sinf(pendulum.angle);
-		pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime;
-		pendulum.angle += pendulum.angularVelocity * deltaTime;
-
-		p.x = pendulum.anchor.x + pendulum.length * std::sinf(pendulum.angle);
-		p.y = pendulum.anchor.y - pendulum.length * std::cosf(pendulum.angle);
-		p.z = pendulum.anchor.z;*/
-
-		
-
-		SpringSimulation(spring, ball, deltaTime);
-
 
 
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, rotate, translate);
@@ -1428,26 +1405,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		DrawSphere({ p, 0.1f }, worldViewProjectionMatrix, viewportMatrix, BLUE);
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawLine3D(
-			spring.anchor,
-			ball.position,
-			worldViewProjectionMatrix,
-			viewportMatrix,
-			WHITE
-		);
 
 		ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
 		ImGui::DragFloat3("Camera Target", &cameraTarget.x, 0.01f);
-		ImGui::DragFloat3("translatess[0]", &translates[0].x, 0.01f);
-		ImGui::DragFloat3("rotates[0]", &rotates[0].x, 0.01f);
-		ImGui::DragFloat3("scales[0]", &scales[0].x, 0.01f);
-		ImGui::DragFloat3("translatess[1]", &translates[1].x, 0.01f);
-		ImGui::DragFloat3("rotates[1]", &rotates[1].x, 0.01f);
-		ImGui::DragFloat3("scales[1]", &scales[1].x, 0.01f);
-		ImGui::DragFloat3("translatess[2]", &translates[2].x, 0.01f);
-		ImGui::DragFloat3("rotates[2]", &rotates[2].x, 0.01f);
-		ImGui::DragFloat3("scales[2]", &scales[2].x, 0.01f);
 		if (ImGui::Button("start"))
 		{
 			start = true;
