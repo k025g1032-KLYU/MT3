@@ -1152,12 +1152,16 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ball.color = BLUE;
 
 
+	float angularVelocity = 3.14f;
+	float angle = 0.0f;
+	Vector3 centerPoint= { 0.0f,0.0f,0.0f };
 
 
 	// キー入力結果を受け取る箱
 	char keys[256] = {0};
 	char preKeys[256] = {0};
 
+	bool start = false;
 	
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -1283,7 +1287,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		}
 		
 
-		float deltaTime = 1.0f / 60.0f;
+		/*float deltaTime = 1.0f / 60.0f;
 		Vector3 diff = ball.position - spring.anchor;
 		float length = Length(diff);
 		if (length != 0.0f)
@@ -1297,16 +1301,19 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		}
 		ball.velocity += ball.acceleration * deltaTime;
-		ball.position += ball.velocity * deltaTime;
+		ball.position += ball.velocity * deltaTime;*/
 
+		Vector3 p= { 0.8f, 0.0f, 0.0f };
+		float r = 0.8f;
+		float deltaTime = 1.0f / 60.0f;
+		if(start)
+		{
+			angle += angularVelocity * deltaTime;
+		}
+		p.x = centerPoint.x + std::cosf(angle) * r;
+		p.y = centerPoint.y + std::sinf(angle) * r;
+		p.z = centerPoint.z;
 
-
-		Matrix4x4 worldMatrixofRed = MakeAffineMatrix(scales[0], rotates[0], translates[0]);
-		Matrix4x4 worldMatrixofGreen = Multiply(MakeAffineMatrix(scales[1], rotates[1], translates[1]), worldMatrixofRed) ;
-		Matrix4x4 worldMatrixofBlue = Multiply(MakeAffineMatrix(scales[2], rotates[2], translates[2]), worldMatrixofGreen);
-		Vector3 NworldMatrixofRed = GetTranslation(worldMatrixofRed);
-		Vector3 NworldMatrixofGreen = GetTranslation(worldMatrixofGreen);
-		Vector3 NworldMatrixofBlue = GetTranslation(worldMatrixofBlue);
 
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, rotate, translate);
 		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, cameraRotation, cameraPosition);
@@ -1315,14 +1322,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f , float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-
-		Matrix4x4 worldViewProjectionMatrixRed = Multiply(worldMatrixofRed, Multiply(viewMatrix, projectionMatrix));
-		Matrix4x4 worldViewProjectionMatrixGreen = Multiply(worldMatrixofGreen, Multiply(viewMatrix, projectionMatrix));
-		Matrix4x4 worldViewProjectionMatrixBlue = Multiply(worldMatrixofBlue, Multiply(viewMatrix, projectionMatrix));
-		Vector3 redPos = GetTranslation(worldMatrixofRed);
-		Vector3 greenPos = GetTranslation(worldMatrixofGreen);
-		Vector3 bluePos = GetTranslation(worldMatrixofBlue);
-
 
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 		
@@ -1350,7 +1349,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		//DrawLine3D(NworldMatrixofRed, NworldMatrixofGreen, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		//DrawLine3D(NworldMatrixofGreen, NworldMatrixofBlue, worldViewProjectionMatrix, viewportMatrix, WHITE);
 
-		DrawSphere({ ball.position, 0.1f }, worldViewProjectionMatrix, viewportMatrix, BLUE);
+		DrawSphere({ p, 0.1f }, worldViewProjectionMatrix, viewportMatrix, BLUE);
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		
@@ -1367,6 +1366,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("translatess[2]", &translates[2].x, 0.01f);
 		ImGui::DragFloat3("rotates[2]", &rotates[2].x, 0.01f);
 		ImGui::DragFloat3("scales[2]", &scales[2].x, 0.01f);
+		if (ImGui::Button("start"))
+		{
+			start = true;
+		}
+
+
 		/*ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);*/
 		/*ImGui::DragFloat3("OBB1 Center", &obb1.center.x, 0.01f);
