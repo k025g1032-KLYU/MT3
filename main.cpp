@@ -6,6 +6,7 @@
 
 const char kWindowTitle[] = "GC1A_11_ヨ_カンリン_タイトル";
 
+#pragma region Structs
 struct mousePosition {
 	int x;
 	int y;
@@ -86,7 +87,9 @@ struct Pendulum {
 	float angularVelocity;
 	float angularAcceleration;
 };
+#pragma endregion
 
+#pragma region Functions
 Vector3 Add(const Vector3& v1, const Vector3& v2) {
 	Vector3 result{};
 	result.x = v1.x + v2.x;
@@ -531,6 +534,7 @@ Vector3 Perpendiculusar(const Vector3& vector) {
 		return Normalize(Vector3{ 0.0f, -vector.z, vector.y });
 	}
 }
+#pragma endregion
 
 //二項演算子
 Vector3 operator+ (const Vector3& v1, const Vector3& v2) { return Add(v1, v2); }
@@ -572,6 +576,7 @@ Vector3& operator/=(Vector3& v, float s) {
 	return v;
 }
 
+#pragma region Draw Functions
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix)
 {
 	const float kGridHalfWidth = 2.0f;
@@ -772,7 +777,8 @@ void DrawLine3D(const Vector3& startPoint, const Vector3& endPoint,
 	Vector3 end = Transform(Transform(endPoint, viewProjectionMatrix), viewportMatrix);
 	Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
 };
-
+#pragma endregion
+#pragma region Collision Functions
 bool BxBCollision(const Sphere& sphere1, const Sphere& sphere2) {
 	float distanceSq = (sphere1.center.x - sphere2.center.x) * (sphere1.center.x - sphere2.center.x) +
 		(sphere1.center.y - sphere2.center.y) * (sphere1.center.y - sphere2.center.y) +
@@ -1110,6 +1116,7 @@ void SpringSimulation(const Spring& spring, Ball& ball, float deltaTime)
 	ball.velocity += ball.acceleration * deltaTime;
 	ball.position += ball.velocity * deltaTime;
 }
+#pragma endregion
 
 
 // Windowsアプリでのエントリーポイント(main関数)
