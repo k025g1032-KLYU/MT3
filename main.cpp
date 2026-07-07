@@ -532,6 +532,46 @@ Vector3 Perpendiculusar(const Vector3& vector) {
 	}
 }
 
+//二項演算子
+Vector3 operator+ (const Vector3& v1, const Vector3& v2) { return Add(v1, v2); }
+Vector3 operator- (const Vector3& v1, const Vector3& v2) { return Subtract(v1, v2); }
+Vector3 operator* (float s, const Vector3& v) { return Multiply(v, s); }
+Vector3 operator* (const Vector3& v, float s) { return s * v; }
+Vector3 operator/ (const Vector3& v, float s) { return Multiply(v, 1.0f / s); }
+Matrix4x4 operator+(const Matrix4x4& m1, const Matrix4x4& m2) { return Add(m1, m2); }
+Matrix4x4 operator-(const Matrix4x4& m1, const Matrix4x4& m2) { return Subtract(m1, m2); }
+Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) { return Multiply(m1, m2); }
+
+//單項演算子
+Vector3 operator-(const Vector3& v) { return { -v.x,-v.y,-v.z }; }
+Vector3 operator+(const Vector3& v) { return v; }
+
+//複合代入演算子
+Vector3& operator+=(Vector3& v1, const Vector3& v2) {
+	v1.x += v2.x;
+	v1.y += v2.y;
+	v1.z += v2.z;
+	return v1;
+}
+Vector3& operator-=(Vector3& v1, Vector3& v2) {
+	v1.x -= v2.x;
+	v1.y -= v2.y;
+	v1.z -= v2.z;
+	return v1;
+}
+Vector3& operator*=(Vector3& v, float s) {
+	v.x *= s;
+	v.y *= s;
+	v.z *= s;
+	return v;
+}
+Vector3& operator/=(Vector3& v, float s) {
+	v.x /= s;
+	v.y /= s;
+	v.z /= s;
+	return v;
+}
+
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix)
 {
 	const float kGridHalfWidth = 2.0f;
@@ -1051,36 +1091,36 @@ Vector3 operator/ (const Vector3& v, float s) { return Multiply(v, 1.0f/s); }
 Matrix4x4 operator+(const Matrix4x4& m1, const Matrix4x4& m2) { return Add(m1, m2); }
 Matrix4x4 operator-(const Matrix4x4& m1, const Matrix4x4& m2) { return Subtract(m1, m2); }
 Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) { return Multiply(m1, m2); }
+void SpringSimulation(const Spring& spring, Ball& ball, float deltaTime)
+{
+	Vector3 diff = ball.position - spring.anchor;
+	float length = Length(diff);
 
-//單項演算子
-Vector3 operator-(const Vector3& v) { return { -v.x,-v.y,-v.z }; }
-Vector3 operator+(const Vector3& v) { return v; }
+	if (length != 0.0f)
+	{
+		Vector3 direction = Normalize(diff);
 
-//複合代入演算子
-Vector3& operator+=(Vector3& v1, const Vector3& v2) {
-	v1.x += v2.x;
-	v1.y += v2.y;
-	v1.z += v2.z;
-	return v1;
+		Vector3 restPosition =
+			spring.anchor + direction * spring.naturalLength;
+
+		Vector3 displacement =
+			ball.position - restPosition;
+
+		Vector3 restoringForce =
+			-spring.stiffness * displacement;
+
+		ball.acceleration = restoringForce / ball.mass;
+	}
+	else
+	{
+		ball.acceleration = { 0.0f,0.0f,0.0f };
+	}
+
+	ball.velocity += ball.acceleration * deltaTime;
+	ball.position += ball.velocity * deltaTime;
 }
-Vector3& operator-=(Vector3& v1, Vector3& v2) {
-	v1.x -= v2.x;
-	v1.y -= v2.x;
-	v1.z -= v2.x;
-	return v1;
-}
-Vector3& operator*=(Vector3& v, float s) {
-	v.x *= s;
-	v.y *= s;
-	v.z *= s;
-	return v;
-}
-Vector3& operator/=(Vector3& v, float s) {
-	v.x /= s;
-	v.y /= s;
-	v.z /= s;
-	return v;
-}
+
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
@@ -1346,6 +1386,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		
 
+		SpringSimulation(spring, ball, deltaTime);
 
 
 
@@ -1387,7 +1428,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		DrawSphere({ p, 0.1f }, worldViewProjectionMatrix, viewportMatrix, BLUE);
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		
+		DrawLine3D(
+			spring.anchor,
+			ball.position,
+			worldViewProjectionMatrix,
+			viewportMatrix,
+			WHITE
+		);
 
 		ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
 		ImGui::DragFloat3("Camera Rotation", &cameraRotation.x, 0.01f);
