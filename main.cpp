@@ -1031,8 +1031,8 @@ Vector3& operator+=(Vector3& v1, const Vector3& v2) {
 }
 Vector3& operator-=(Vector3& v1, Vector3& v2) {
 	v1.x -= v2.x;
-	v1.y -= v2.x;
-	v1.z -= v2.x;
+	v1.y -= v2.y;
+	v1.z -= v2.z;
 	return v1;
 }
 Vector3& operator*=(Vector3& v, float s) {
@@ -1290,7 +1290,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		{
 			Vector3 direction = Normalize(diff);
 			Vector3 restPosition = spring.anchor + direction * spring.naturalLength;
-			Vector3 displacement = length * (ball.position - restPosition);
+			Vector3 displacement = ball.position - restPosition;
 			Vector3 restoringForce = -spring.stiffness * displacement;
 			Vector3 force = restoringForce;
 			ball.acceleration = force / ball.mass;
@@ -1353,6 +1353,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		DrawSphere({ ball.position, 0.1f }, worldViewProjectionMatrix, viewportMatrix, BLUE);
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
+		DrawLine3D(
+			spring.anchor,
+			ball.position,
+			worldViewProjectionMatrix,
+			viewportMatrix,
+			WHITE
+		);
 		
 
 		ImGui::DragFloat3("Camera Position", &cameraPosition.x, 0.1f);
