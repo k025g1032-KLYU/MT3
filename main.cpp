@@ -1157,9 +1157,16 @@ void SpringSimulation(const Spring& spring, Ball& ball, float deltaTime)
 	ball.velocity += ball.acceleration * deltaTime;
 	ball.position += ball.velocity * deltaTime;
 }
+
+
+Vector3 Reflect(const Vector3& incident, const Vector3& normal)
+{
+	Vector3 normalizedNormal = Normalize(normal);
+	float dotProduct = Dot(incident, normalizedNormal);
+	return incident - 2.0f * dotProduct * normalizedNormal;
+}
+
 #pragma endregion
-
-
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
@@ -1252,6 +1259,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	static float orbitStartPhi = 0.0f;
 	static float orbitRadius = 0.0f;
 
+	Plane plane{ Normalize({ -0.2f, 0.9f, -0.3f }), 0.0f };
 
 	Spring spring{};
 	spring.anchor = { 0.0f,0.0f,0.0f };
@@ -1259,10 +1267,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	spring.stiffness = 100.0f;
 
 	Ball ball{};
-	ball.position={ 1.2f, 0.0f, 0.0f };
+	ball.position={0.8f,1.2f, 0.3f };
 	ball.mass = 2.0f;
 	ball.radius = 0.05f;
-	ball.color = BLUE;
+	ball.color = WHITE;
 
 	Pendulum pendulum;
 	pendulum.anchor = { 0.0f, 1.0f, 0.0f };
@@ -1289,6 +1297,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	bool start = false;
 	ball.position = ConicalPendulumSimulation(conicalPendulum, 0);
+	ball.acceleration = { 0.0f,-9.8f,0.0f };
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -1419,8 +1428,20 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		float deltaTime = 1.0f / 60.0f;
 		if(start)
 		{
-			ball.position = ConicalPendulumSimulation(conicalPendulum, deltaTime);
+			
 		}
+
+		ball.velocity += ball.acceleration * deltaTime;
+		ball.position += ball.velocity * deltaTime;
+		if (BxPCollision(Sphere{ ball.position,ball.radius }, plane))
+		{
+			Vector3 reflected = Reflect(ball.velocity, plane.normal);
+			Vector3 projectToNormal = Project(reflected, plane.normal);
+			Vector3 movingDirection = reflected - projectToNormal;
+			ball.velocity = projectToNormal * e + movingDirection;
+		}
+
+
 
 
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, rotate, translate);
