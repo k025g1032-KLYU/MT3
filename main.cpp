@@ -1267,7 +1267,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	spring.stiffness = 100.0f;
 
 	Ball ball{};
-	ball.position={0.8f,1.2f, 0.3f };
+	ball.position={0.8f,2.0f, 0.3f };
 	ball.mass = 2.0f;
 	ball.radius = 0.05f;
 	ball.color = WHITE;
@@ -1296,7 +1296,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	char preKeys[256] = {0};
 
 	bool start = false;
-	ball.position = ConicalPendulumSimulation(conicalPendulum, 0);
+	//ball.position = ConicalPendulumSimulation(conicalPendulum, 0);
 	ball.acceleration = { 0.0f,-9.8f,0.0f };
 
 	// ウィンドウの×ボタンが押されるまでループ
@@ -1428,20 +1428,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		float deltaTime = 1.0f / 60.0f;
 		if(start)
 		{
-			
+			ball.velocity += ball.acceleration * deltaTime;
+			ball.position += ball.velocity * deltaTime;
+			if (BxPCollision(Sphere{ ball.position,ball.radius }, plane))
+			{
+				Vector3 reflected = Reflect(ball.velocity, plane.normal);
+				Vector3 projectToNormal = Project(reflected, plane.normal);
+				Vector3 movingDirection = reflected - projectToNormal;
+				ball.velocity = projectToNormal * 1.0f + movingDirection;
+			}
 		}
 
-		ball.velocity += ball.acceleration * deltaTime;
-		ball.position += ball.velocity * deltaTime;
-		if (BxPCollision(Sphere{ ball.position,ball.radius }, plane))
-		{
-			Vector3 reflected = Reflect(ball.velocity, plane.normal);
-			Vector3 projectToNormal = Project(reflected, plane.normal);
-			Vector3 movingDirection = reflected - projectToNormal;
-			ball.velocity = projectToNormal * e + movingDirection;
-		}
-
-
+		
 
 
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, rotate, translate);
@@ -1478,8 +1476,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		//DrawLine3D(NworldMatrixofRed, NworldMatrixofGreen, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		//DrawLine3D(NworldMatrixofGreen, NworldMatrixofBlue, worldViewProjectionMatrix, viewportMatrix, WHITE);
 
-		DrawLine3D(conicalPendulum.anchor, ball.position, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		//DrawLine3D(conicalPendulum.anchor, ball.position, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawSphere({ ball.position, 0.1f }, worldViewProjectionMatrix, viewportMatrix, BLUE);
+		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		DrawSphere({ cameraTarget,0.01f }, worldViewProjectionMatrix, viewportMatrix, WHITE); // カメラターゲットを描画
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 
