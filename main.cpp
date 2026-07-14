@@ -68,6 +68,7 @@ struct Spring {
 	Vector3 anchor;
 	float naturalLength;
 	float stiffness;
+	float dampingCoefficient;
 };
 
 struct Ball{
@@ -1053,6 +1054,8 @@ void SpringSimulation(const Spring& spring, Ball& ball, float deltaTime)
 	Vector3 diff = ball.position - spring.anchor;
 	float length = Length(diff);
 
+	Vector3 force = { 0.0f, 0.0f, 0.0f };
+
 	if (length != 0.0f)
 	{
 		Vector3 direction = Normalize(diff);
@@ -1066,13 +1069,17 @@ void SpringSimulation(const Spring& spring, Ball& ball, float deltaTime)
 		Vector3 restoringForce =
 			-spring.stiffness * displacement;
 
-		ball.acceleration = restoringForce / ball.mass;
-	}
-	else
-	{
-		ball.acceleration = { 0.0f,0.0f,0.0f };
+		force += restoringForce;
+
+		
 	}
 
+	Vector3 dampingForce =
+		-spring.dampingCoefficient * ball.velocity;
+
+	force += dampingForce;
+
+	ball.acceleration = force / ball.mass;
 	ball.velocity += ball.acceleration * deltaTime;
 	ball.position += ball.velocity * deltaTime;
 }
@@ -1175,6 +1182,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	spring.anchor = { 0.0f,0.0f,0.0f };
 	spring.naturalLength = 1.0f;
 	spring.stiffness = 100.0f;
+	spring.dampingCoefficient = 2.0f;
 
 	Ball ball{};
 	ball.position={ 1.2f, 0.0f, 0.0f };
