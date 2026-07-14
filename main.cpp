@@ -1102,7 +1102,8 @@ Vector3 ConicalPendulumSimulation(ConicalPendulum& conicalPendulum,float deltaTi
 
 	float cosTheta = std::cos(conicalPendulum.halfApexAngle);
 
-	if (std::abs(cosTheta) > 0.0001f)
+	if (conicalPendulum.length > 0.0f &&
+		cosTheta > 0.0001f)
 	{
 		conicalPendulum.angularVelocity =
 			std::sqrt(
